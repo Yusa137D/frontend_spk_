@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'dart:html' as html; // PENTING: Untuk download di Flutter Web
+import 'package:lottie/lottie.dart';
+
 import 'daftar_guru_kuesioner_page.dart';
 import 'ranking_page.dart';
 import 'kelola_guru_page.dart';
+import 'kelola_siswa_page.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -16,6 +18,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final Dio _dio = Dio();
   Map? nilaiSaya;
   bool _isLoadingNilai = false;
   int _selectedMenu = 0;
@@ -42,7 +45,6 @@ class _DashboardPageState extends State<DashboardPage> {
       widget.user['role'].toString().toLowerCase().contains('kepala') ||
       widget.user['role'].toString().toLowerCase().contains('kepsek');
 
-  // FUNGSI DOWNLOAD PDF
   void _downloadLaporan() {
     html.window.open("http://127.0.0.1:5000/api/print-pdf", "_blank");
   }
@@ -50,14 +52,14 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> fetchNilaiSaya() async {
     setState(() => _isLoadingNilai = true);
     try {
-      final res = await http.get(
-        Uri.parse("http://127.0.0.1:5000/api/nilai-saya/${widget.user['id_user']}"),
+      final res = await _dio.get(
+        "http://127.0.0.1:5000/api/nilai-saya/${widget.user['id_user']}",
       );
       if (res.statusCode == 200) {
-        setState(() => nilaiSaya = jsonDecode(res.body));
+        setState(() => nilaiSaya = res.data);
       }
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error fetching nilai: $e");
     } finally {
       if (mounted) setState(() => _isLoadingNilai = false);
     }
@@ -78,7 +80,9 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Row(
         children: [
           _buildSidebar(),
-          Expanded(child: _buildMainContent()),
+          Expanded(
+            child: _buildMainContent(), // Stack dihapus agar robot nempel di nama saja
+          ),
         ],
       ),
     );
@@ -100,7 +104,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         children: [
           const SizedBox(height: 36),
-          // Logo Section
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -137,16 +140,18 @@ class _DashboardPageState extends State<DashboardPage> {
           if (_isAdmin || _isKepsek) ...[
             const SizedBox(height: 8),
             _sideLabel("ADMINISTRASI"),
-            if (_isAdmin)
+            if (_isAdmin) ...[
               _sideItem(Icons.manage_accounts_rounded, "Kelola Guru", 3, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const KelolaGuruPage()));
               }),
-            // TOMBOL DOWNLOAD DI SIDEBAR
-            _sideItem(Icons.picture_as_pdf_rounded, "Cetak Laporan", 4, _downloadLaporan),
+              _sideItem(Icons.people_alt_rounded, "Kelola Siswa", 4, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const KelolaSiswaPage()));
+              }),
+            ],
+            _sideItem(Icons.picture_as_pdf_rounded, "Cetak Laporan", 5, _downloadLaporan),
           ],
 
           const Spacer(),
-          // Logout
           InkWell(
             onTap: _logout,
             child: Container(
@@ -180,7 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               _buildTopBar(),
               const SizedBox(height: 28),
-              _buildStatCards(),
+              _buildStatCards(), 
               if (_isGuru) ...[
                 const SizedBox(height: 28),
                 _buildDetailNilaiSection(),
@@ -202,7 +207,7 @@ class _DashboardPageState extends State<DashboardPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text("Dashboard SPK", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _textPrimary)),
-            Text("Selamat datang kembali, ${widget.user['nama_lengkap']}", style: const TextStyle(color: _textSecondary, fontSize: 13.5)),
+            Text("Selamat datang kembali, ${widget.user['username']}", style: const TextStyle(color: _textSecondary, fontSize: 13.5)),
           ],
         ),
         _userChip(),
@@ -215,13 +220,20 @@ class _DashboardPageState extends State<DashboardPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(40)),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(radius: 16, backgroundColor: _accent, child: Text(widget.user['nama_lengkap'][0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 13))),
+          // Robot astronot kecil muncul di depan nama khusus Admin
+          if (_isAdmin) 
+            const Padding(
+              padding: EdgeInsets.only(right: 8.0),
+              child: AdminEasterEgg(),
+            ),
+          CircleAvatar(radius: 16, backgroundColor: _accent, child: Text(widget.user['username'][0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 13))),
           const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.user['nama_lengkap'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+              Text(widget.user['username'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
               Text(widget.user['role'], style: const TextStyle(fontSize: 10, color: _textSecondary)),
             ],
           ),
@@ -231,13 +243,23 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildStatCards() {
-    return Row(
-      children: [
-        _statCard(Icons.star_rounded, const Color(0xFF2563EB), const Color(0xFFEFF6FF), "Nilai TOPSIS", _isGuru ? "${nilaiSaya?['nilai_topsis'] ?? '-'}" : "-"),
-        _statCard(Icons.emoji_events_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), "Predikat", _isGuru ? "${nilaiSaya?['predikat'] ?? '-'}" : "-"),
-        _statCard(Icons.assignment_turned_in_rounded, const Color(0xFF22C55E), const Color(0xFFF0FDF4), "Status", _isGuru ? "Aktif" : "-"),
-      ],
-    );
+    if (_isGuru) {
+      return Row(
+        children: [
+          _statCard(Icons.star_rounded, const Color(0xFF2563EB), const Color(0xFFEFF6FF), "Nilai TOPSIS", "${nilaiSaya?['nilai_topsis'] ?? '-'}"),
+          _statCard(Icons.emoji_events_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), "Predikat", "${nilaiSaya?['predikat'] ?? '-'}"),
+          _statCard(Icons.assignment_turned_in_rounded, const Color(0xFF22C55E), const Color(0xFFF0FDF4), "Status", "Aktif"),
+        ],
+      );
+    } else {
+      return Row(
+        children: [
+          _statCard(Icons.admin_panel_settings_rounded, const Color(0xFF2563EB), const Color(0xFFEFF6FF), "Peran Akun", widget.user['role']),
+          _statCard(Icons.verified_user_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), "Hak Akses", _isAdmin ? "Penuh" : "Pemantauan"),
+          _statCard(Icons.cloud_done_rounded, const Color(0xFF22C55E), const Color(0xFFF0FDF4), "Status Sistem", "Online"),
+        ],
+      );
+    }
   }
 
   Widget _statCard(IconData icon, Color color, Color bg, String label, String value) {
@@ -252,7 +274,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 16),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label, style: const TextStyle(color: _textSecondary, fontSize: 12.5)),
-              Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _textPrimary)),
+              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary)),
             ]),
           ],
         ),
@@ -320,20 +342,22 @@ class _DashboardPageState extends State<DashboardPage> {
               _menuBox("Lihat Ranking", Icons.leaderboard_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const RankingPage()));
               }),
-              // TOMBOL DOWNLOAD DI QUICK ACTION
               _menuBox("Cetak Laporan", Icons.picture_as_pdf_rounded, const Color(0xFF10B981), const Color(0xFFECFDF5), _downloadLaporan),
             ],
-            if (_isAdmin)
+            if (_isAdmin) ...[
               _menuBox("Kelola Guru", Icons.manage_accounts_rounded, const Color(0xFFEF4444), const Color(0xFFFEF2F2), () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const KelolaGuruPage()));
               }),
+              _menuBox("Kelola Siswa", Icons.people_alt_rounded, const Color(0xFF8B5CF6), const Color(0xFFF5F3FF), () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const KelolaSiswaPage()));
+              }),
+            ]
           ],
         ),
       ],
     );
   }
 
-  // --- Widget Helpers ---
   Widget _sideLabel(String label) => Padding(padding: const EdgeInsets.fromLTRB(20, 4, 20, 6), child: Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w700)));
 
   Widget _sideItem(IconData icon, String title, int index, VoidCallback onTap) {
@@ -356,6 +380,24 @@ class _DashboardPageState extends State<DashboardPage> {
         width: 155, padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
         decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.grey.shade100, blurRadius: 12, offset: const Offset(0, 4))]),
         child: Column(children: [Container(width: 52, height: 52, decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: color)), const SizedBox(height: 12), Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))]),
+      ),
+    );
+  }
+}
+
+// Widget Robot Mungil untuk pendamping Nama Admin
+class AdminEasterEgg extends StatelessWidget {
+  const AdminEasterEgg({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 35,
+      height: 35,
+      child: Lottie.network(
+        'https://assets9.lottiefiles.com/packages/lf20_xh83pj1c.json',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const SizedBox(),
       ),
     );
   }

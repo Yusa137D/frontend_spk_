@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dashboard_page.dart';
 import 'register_page.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,14 +27,31 @@ class _LoginPageState extends State<LoginPage> {
   static const Color _border    = Color(0xFFE2E8F0);
   static const Color _inputBg   = Color(0xFFF8FAFC);
 
+  // ─── FUNGSI VALIDASI GMAIL ───
+  bool _isValidEmail(String email) {
+    return RegExp(r"^[a-zA-Z0-9.]+@gmail\.com$").hasMatch(email);
+  }
+
   Future<void> _handleLogin() async {
+    // 1. Cek jika kosong
+    if (_userController.text.isEmpty || _passController.text.isEmpty) {
+      _showMsg("Email dan password tidak boleh kosong!", Colors.orange);
+      return;
+    }
+
+    // 2. Cek validasi @gmail.com
+    if (!_isValidEmail(_userController.text.trim())) {
+      _showMsg("Gunakan format email @gmail.com yang valid!", Colors.red);
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
         Uri.parse("http://127.0.0.1:5000/api/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "username": _userController.text,
+          "email": _userController.text.trim(),
           "password": _passController.text,
         }),
       );
@@ -41,8 +59,15 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       final res = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
+  if (response.statusCode == 200) {
+        // AMBIL DATA USER DARI RESPONSE
         Map userData = res['user'];
+        
+        // REVISI: Pastikan kita mengambil 'username' sebagai nama tampilan
+        String namaTampilan = userData['username'] ?? "User";
+
+        _showMsg("Selamat datang, $namaTampilan!", Colors.green);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -66,6 +91,7 @@ class _LoginPageState extends State<LoginPage> {
         content: Text(msg),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
@@ -248,7 +274,7 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 6),
                         const Center(
                           child: Text(
-                            "Silakan masuk untuk melanjutkan",
+                            "Silakan masuk menggunakan email Gmail",
                             style: TextStyle(
                                 color: _textSub, fontSize: 13.5),
                           ),
@@ -256,8 +282,8 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 36),
 
-                        // Username field
-                        const Text("Username",
+                        // Username field diubah menjadi Email
+                        const Text("Email Gmail",
                             style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13.5,
@@ -265,8 +291,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 8),
                         _inputField(
                           controller: _userController,
-                          hint: "Masukkan username",
-                          icon: Icons.person_outline_rounded,
+                          hint: "contoh@gmail.com",
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress, // Memunculkan keyboard @ di HP
                         ),
 
                         const SizedBox(height: 20),
@@ -286,6 +313,20 @@ class _LoginPageState extends State<LoginPage> {
                         ),
 
                         const SizedBox(height: 28),
+
+
+                // Letakkan ini tepat di bawah _inputField untuk Password di login_page.dart
+                Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                onPressed: () {
+                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage()));
+                },
+                child: const Text("Lupa Password?", style: TextStyle(color: _blue, fontWeight: FontWeight.w600)),
+                        ),
+                ),
+                const SizedBox(height: 16), // Jarak ke tombol Login
+
 
                         // Login button
                         SizedBox(
@@ -386,10 +427,12 @@ class _LoginPageState extends State<LoginPage> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text, // Parameter baru untuk keyboard
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword && _obscurePass,
+      keyboardType: keyboardType, // Digunakan di sini
       style: const TextStyle(fontSize: 14, color: _textMain),
       decoration: InputDecoration(
         hintText: hint,

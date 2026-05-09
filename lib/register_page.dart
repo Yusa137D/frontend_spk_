@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:dio/dio.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,12 +9,14 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _userController   = TextEditingController();
+  final _userController   = TextEditingController(); // Untuk Email
+  final _waController     = TextEditingController(); // Untuk WhatsApp
   final _passController   = TextEditingController();
   final _namaController   = TextEditingController();
   final _indukController  = TextEditingController();
   final _kelasController  = TextEditingController();
 
+  final Dio _dio = Dio();
   String _selectedRole = 'Siswa';
   bool _isLoading      = false;
   bool _obscurePass    = true;
@@ -28,42 +29,60 @@ class _RegisterPageState extends State<RegisterPage> {
   static const Color _inputBg  = Color(0xFFF8FAFC);
   static const Color _infoBg   = Color(0xFFEFF6FF);
 
+  // ─── FUNGSI VALIDASI GMAIL ───
+  bool _isValidEmail(String email) {
+    return RegExp(r"^[a-zA-Z0-9.]+@gmail\.com$").hasMatch(email);
+  }
+
   Future<void> _handleRegister() async {
     if (_userController.text.isEmpty ||
+        _waController.text.isEmpty ||
         _passController.text.isEmpty ||
         _indukController.text.isEmpty) {
       _showMsg("Semua field wajib diisi!", Colors.orange);
       return;
     }
+
+    // ─── PENGECEKAN FORMAT EMAIL ───
+    if (!_isValidEmail(_userController.text.trim())) {
+      _showMsg("Gunakan format email @gmail.com yang valid!", Colors.red);
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final response = await http.post(
-        Uri.parse("http://127.0.0.1:5000/api/register"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username":     _userController.text,
+      final response = await _dio.post(
+        "http://127.0.0.1:5000/api/register",
+data: {
+          "username":     _namaController.text.trim(), // Nama lengkap dikirim ke key 'username'
+          "email":        _userController.text.trim(),
+          "no_wa":        _waController.text.trim(),
           "password":     _passController.text,
-          "nama_lengkap": _namaController.text,
           "role":         _selectedRole,
-          "nomor_induk":  _indukController.text,
-          "kelas":        _kelasController.text,
-        }),
+          "nomor_induk":  _indukController.text.trim(),
+          "kelas":        _kelasController.text.trim(),
+        },
       );
-      final res = jsonDecode(response.body);
+
       if (response.statusCode == 201) {
         _showMsg("Registrasi Berhasil! Silakan Login", Colors.green);
         Navigator.pop(context);
-      } else {
-        _showMsg(res['message'] ?? "Registrasi Gagal", Colors.red);
       }
+    } on DioException catch (e) {
+      String errorMessage = "Registrasi Gagal";
+      if (e.response != null && e.response?.data != null) {
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      }
+      _showMsg(errorMessage, Colors.red);
     } catch (e) {
       _showMsg("Koneksi gagal ke server", Colors.red);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _showMsg(String msg, Color color) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
@@ -91,12 +110,11 @@ class _RegisterPageState extends State<RegisterPage> {
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
-      // ── Kunci: Row langsung di body, crossAxisAlignment.stretch ──
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          // ═══════════════ LEFT PANEL — full height ═══════════════
+          // ═══════════════ LEFT PANEL ═══════════════
           Expanded(
             flex: 5,
             child: Container(
@@ -290,12 +308,24 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
 
                     const SizedBox(height: 18),
-                    _fieldLabel("Username"),
+                    _fieldLabel("Email Gmail"),
                     const SizedBox(height: 8),
                     _inputField(
                       controller: _userController,
-                      hint: "Masukkan username",
+                      hint: "contoh@gmail.com",
                       icon: Icons.alternate_email_rounded,
+                      type: TextInputType.emailAddress,
+                    ),
+
+                    const SizedBox(height: 18),
+                    // ─── KOLOM NOMOR WHATSAPP ───
+                    _fieldLabel("Nomor WhatsApp Aktif"),
+                    const SizedBox(height: 8),
+                    _inputField(
+                      controller: _waController,
+                      hint: "Contoh: 081234567890",
+                      icon: Icons.phone_android_rounded,
+                      type: TextInputType.phone,
                     ),
 
                     const SizedBox(height: 18),
@@ -444,10 +474,12 @@ class _RegisterPageState extends State<RegisterPage> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
+    TextInputType type = TextInputType.text,
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword && _obscurePass,
+      keyboardType: type,
       style: const TextStyle(fontSize: 14, color: _textMain),
       decoration: InputDecoration(
         hintText: hint,
