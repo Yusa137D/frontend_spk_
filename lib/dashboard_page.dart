@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'dart:html' as html; // PENTING: Untuk download di Flutter Web
+import 'dart:html' as html;
 import 'package:lottie/lottie.dart';
 
 import 'daftar_guru_kuesioner_page.dart';
@@ -23,6 +23,10 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isLoadingNilai = false;
   int _selectedMenu = 0;
 
+  // Variabel penampung data nyata dari database
+  int _totalGuru = 0;
+  int _totalSiswa = 0;
+
   // ─── Color palette ────────────────────────────────────────────────────────
   static const Color _sidebarTop    = Color(0xFF1E3A8A);
   static const Color _sidebarBot    = Color(0xFF2563EB);
@@ -37,6 +41,8 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     if (_isGuru) fetchNilaiSaya();
+    // Panggil fungsi hitung data jika yang login adalah Admin / Kepsek
+    if (_isAdmin || _isKepsek) fetchDashboardStats(); 
   }
 
   bool get _isGuru  => widget.user['role'].toString().toLowerCase().contains('guru');
@@ -44,7 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
   bool get _isKepsek =>
       widget.user['role'].toString().toLowerCase().contains('kepala') ||
       widget.user['role'].toString().toLowerCase().contains('kepsek');
-
+  bool get _isSiswa => widget.user['role'].toString().toLowerCase().contains('siswa');
   void _downloadLaporan() {
     html.window.open("http://127.0.0.1:5000/api/print-pdf", "_blank");
   }
@@ -52,9 +58,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> fetchNilaiSaya() async {
     setState(() => _isLoadingNilai = true);
     try {
-      final res = await _dio.get(
-        "http://127.0.0.1:5000/api/nilai-saya/${widget.user['id_user']}",
-      );
+      final res = await _dio.get("http://127.0.0.1:5000/api/nilai-saya/${widget.user['id_user']}");
       if (res.statusCode == 200) {
         setState(() => nilaiSaya = res.data);
       }
@@ -62,6 +66,21 @@ class _DashboardPageState extends State<DashboardPage> {
       debugPrint("Error fetching nilai: $e");
     } finally {
       if (mounted) setState(() => _isLoadingNilai = false);
+    }
+  }
+
+  // Fungsi baru untuk mengambil total Guru dan Siswa
+  Future<void> fetchDashboardStats() async {
+    try {
+      final res = await _dio.get("http://127.0.0.1:5000/api/dashboard-stats");
+      if (res.statusCode == 200) {
+        setState(() {
+          _totalGuru = res.data['total_guru'] ?? 0;
+          _totalSiswa = res.data['total_siswa'] ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching dashboard stats: $e");
     }
   }
 
@@ -80,16 +99,13 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Row(
         children: [
           _buildSidebar(),
-          Expanded(
-            child: _buildMainContent(), // Stack dihapus agar robot nempel di nama saja
-          ),
+          Expanded(child: _buildMainContent()), 
         ],
       ),
     );
   }
 
   // ═══════════════════════════ SIDEBAR ═════════════════════════════════════
-
   Widget _buildSidebar() {
     return Container(
       width: 240,
@@ -110,10 +126,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Container(
                   width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.shield_rounded, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 12),
@@ -130,9 +143,10 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 36),
           _sideLabel("MENU UTAMA"),
           _sideItem(Icons.dashboard_rounded, "Dashboard", 0, () => setState(() => _selectedMenu = 0)),
-          _sideItem(Icons.assignment_rounded, "Kuesioner", 1, () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => DaftarGuruKuesionerPage(idUser: widget.user['id_user'])));
-          }),
+if (_isGuru || _isSiswa)
+  _sideItem(Icons.assignment_rounded, "Kuesioner", 1, () {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => DaftarGuruKuesionerPage(idUser: widget.user['id_user'])));
+  }),
           _sideItem(Icons.bar_chart_rounded, "Ranking", 2, () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const RankingPage()));
           }),
@@ -173,7 +187,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ═══════════════════════════ MAIN CONTENT ════════════════════════════════
-
   Widget _buildMainContent() {
     return Container(
       color: _bg,
@@ -222,7 +235,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Robot astronot kecil muncul di depan nama khusus Admin
           if (_isAdmin) 
             const Padding(
               padding: EdgeInsets.only(right: 8.0),
@@ -252,11 +264,12 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       );
     } else {
+      // TAMPILAN ADMIN / KEPSEK YANG BARU (DATA NYATA DARI DATABASE)
       return Row(
         children: [
           _statCard(Icons.admin_panel_settings_rounded, const Color(0xFF2563EB), const Color(0xFFEFF6FF), "Peran Akun", widget.user['role']),
-          _statCard(Icons.verified_user_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), "Hak Akses", _isAdmin ? "Penuh" : "Pemantauan"),
-          _statCard(Icons.cloud_done_rounded, const Color(0xFF22C55E), const Color(0xFFF0FDF4), "Status Sistem", "Online"),
+          _statCard(Icons.groups_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), "Total Guru", "$_totalGuru Terdaftar"),
+          _statCard(Icons.school_rounded, const Color(0xFF22C55E), const Color(0xFFF0FDF4), "Total Siswa", "$_totalSiswa Terdaftar"),
         ],
       );
     }
@@ -274,7 +287,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 16),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label, style: const TextStyle(color: _textSecondary, fontSize: 12.5)),
-              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary)),
+              Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _textPrimary)), // Ukuran font sedikit disesuaikan
             ]),
           ],
         ),
@@ -334,10 +347,10 @@ class _DashboardPageState extends State<DashboardPage> {
         Wrap(
           spacing: 16, runSpacing: 16,
           children: [
-            if (_isGuru || widget.user['role'].toString().toLowerCase().contains('siswa'))
-              _menuBox("Isi Kuesioner", Icons.assignment_rounded, const Color(0xFF2563EB), const Color(0xFFEFF6FF), () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => DaftarGuruKuesionerPage(idUser: widget.user['id_user'])));
-              }),
+if (_isGuru || _isSiswa)
+      _menuBox("Isi Kuesioner", Icons.assignment_rounded, const Color(0xFF2563EB), const Color(0xFFEFF6FF), () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => DaftarGuruKuesionerPage(idUser: widget.user['id_user'])));
+      }),
             if (_isKepsek || _isAdmin) ...[
               _menuBox("Lihat Ranking", Icons.leaderboard_rounded, const Color(0xFFF59E0B), const Color(0xFFFFFBEB), () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const RankingPage()));
