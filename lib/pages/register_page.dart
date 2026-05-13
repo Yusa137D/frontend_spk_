@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // Import Dio untuk Exception Handling
+import '../services/api_service.dart'; // Import ApiService
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -9,14 +10,13 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _userController   = TextEditingController(); // Untuk Email
-  final _waController     = TextEditingController(); // Untuk WhatsApp
+  final _userController   = TextEditingController();
+  final _waController     = TextEditingController();
   final _passController   = TextEditingController();
   final _namaController   = TextEditingController();
   final _indukController  = TextEditingController();
   final _kelasController  = TextEditingController();
 
-  final Dio _dio = Dio();
   String _selectedRole = 'Siswa';
   bool _isLoading      = false;
   bool _obscurePass    = true;
@@ -29,11 +29,11 @@ class _RegisterPageState extends State<RegisterPage> {
   static const Color _inputBg  = Color(0xFFF8FAFC);
   static const Color _infoBg   = Color(0xFFEFF6FF);
 
-  // ─── FUNGSI VALIDASI GMAIL ───
   bool _isValidEmail(String email) {
     return RegExp(r"^[a-zA-Z0-9.]+@gmail\.com$").hasMatch(email);
   }
 
+  // ── Logic Bersih dengan ApiService ─────────────────────────────
   Future<void> _handleRegister() async {
     if (_userController.text.isEmpty ||
         _waController.text.isEmpty ||
@@ -43,7 +43,6 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // ─── PENGECEKAN FORMAT EMAIL ───
     if (!_isValidEmail(_userController.text.trim())) {
       _showMsg("Gunakan format email @gmail.com yang valid!", Colors.red);
       return;
@@ -51,20 +50,17 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
     try {
-      final response = await _dio.post(
-        "http://127.0.0.1:5000/api/register",
-data: {
-          "username":     _namaController.text.trim(), // Nama lengkap dikirim ke key 'username'
-          "email":        _userController.text.trim(),
-          "no_wa":        _waController.text.trim(),
-          "password":     _passController.text,
-          "role":         _selectedRole,
-          "nomor_induk":  _indukController.text.trim(),
-          "kelas":        _kelasController.text.trim(),
-        },
-      );
+      final response = await ApiService.dio.post("/register", data: {
+        "username":     _namaController.text.trim(),
+        "email":        _userController.text.trim(),
+        "no_wa":        _waController.text.trim(),
+        "password":     _passController.text,
+        "role":         _selectedRole,
+        "nomor_induk":  _indukController.text.trim(),
+        "kelas":        _kelasController.text.trim(),
+      });
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 && mounted) {
         _showMsg("Registrasi Berhasil! Silakan Login", Colors.green);
         Navigator.pop(context);
       }
@@ -113,8 +109,6 @@ data: {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
-          // ═══════════════ LEFT PANEL ═══════════════
           Expanded(
             flex: 5,
             child: Container(
@@ -145,7 +139,6 @@ data: {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Logo
                         Row(
                           children: [
                             Container(
@@ -241,7 +234,6 @@ data: {
             ),
           ),
 
-          // ═══════════════ RIGHT FORM ═══════════════
           Expanded(
             flex: 6,
             child: SingleChildScrollView(
@@ -263,7 +255,6 @@ data: {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Form header
                     Row(
                       children: [
                         Container(
@@ -318,7 +309,6 @@ data: {
                     ),
 
                     const SizedBox(height: 18),
-                    // ─── KOLOM NOMOR WHATSAPP ───
                     _fieldLabel("Nomor WhatsApp Aktif"),
                     const SizedBox(height: 8),
                     _inputField(
@@ -384,7 +374,6 @@ data: {
 
                     const SizedBox(height: 22),
 
-                    // Info box
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -462,8 +451,6 @@ data: {
       ),
     );
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   Widget _fieldLabel(String label) => Text(label,
       style: const TextStyle(

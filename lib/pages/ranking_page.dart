@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/api_service.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -36,15 +35,18 @@ class _RankingPageState extends State<RankingPage>
     super.dispose();
   }
 
-  // ── Logic (tidak diubah) ──────────────────────────────────────
+  // ── Logic Bersih dengan ApiService ─────────────────────────────
   Future<void> fetchData() async {
-    final res = await http.get(
-        Uri.parse("http://127.0.0.1:5000/api/hitung-topsis"));
-    setState(() {
-      data    = jsonDecode(res.body);
-      loading = false;
-    });
-    _animController.forward();
+    final res = await ApiService.getRankingTopsis();
+    if (res != null && mounted) {
+      setState(() {
+        data = res;
+        loading = false;
+      });
+      _animController.forward();
+    } else {
+      if (mounted) setState(() => loading = false);
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────
@@ -82,7 +84,6 @@ class _RankingPageState extends State<RankingPage>
     );
   }
 
-  // ── AppBar ────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(64),
@@ -153,14 +154,12 @@ class _RankingPageState extends State<RankingPage>
     );
   }
 
-  // ── Body ──────────────────────────────────────────────────────
   Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Stat cards — pakai Row agar tinggi fix ──────────
           Row(
             children: [
               _StatCard(
@@ -196,7 +195,6 @@ class _RankingPageState extends State<RankingPage>
 
           const SizedBox(height: 24),
 
-          // ── Section title ───────────────────────────────────
           const Text('Daftar Ranking',
               style: TextStyle(
                   fontSize: 17,
@@ -204,7 +202,6 @@ class _RankingPageState extends State<RankingPage>
                   color: kText)),
           const SizedBox(height: 14),
 
-          // ── Ranking table ───────────────────────────────────
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -219,7 +216,6 @@ class _RankingPageState extends State<RankingPage>
             ),
             child: Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 14),
@@ -238,7 +234,6 @@ class _RankingPageState extends State<RankingPage>
                 ),
                 const Divider(height: 1, color: Color(0xFFEEF2F9)),
 
-                // Rows
                 ...List.generate(data.length, (i) {
                   final item   = data[i];
                   final ci     = (item['nilai_ci'] as num).toDouble();
@@ -280,7 +275,7 @@ class _RankingPageState extends State<RankingPage>
           const SizedBox(height: 28),
           Center(
             child: Text(
-              '© 2024 SPK Guru · SDN Mranggen',
+              '©️ 2024 SPK Guru · SDN Mranggen',
               style: TextStyle(color: kSubtext, fontSize: 11),
             ),
           ),
@@ -298,7 +293,6 @@ class _RankingPageState extends State<RankingPage>
   );
 }
 
-// ── Stat Card ──────────────────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String   label;
@@ -372,7 +366,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── Ranking Row ────────────────────────────────────────────────
 class _RankingRow extends StatelessWidget {
   final int    rank;
   final String nama;
@@ -406,7 +399,6 @@ class _RankingRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
-              // Rank badge
               SizedBox(
                 width: 60,
                 child: Row(
@@ -437,7 +429,6 @@ class _RankingRow extends StatelessWidget {
                 ),
               ),
 
-              // Avatar + name
               Expanded(
                 flex: 3,
                 child: Row(
@@ -472,7 +463,6 @@ class _RankingRow extends StatelessWidget {
                 ),
               ),
 
-              // Predikat badge
               Expanded(
                 flex: 2,
                 child: Align(
@@ -494,7 +484,6 @@ class _RankingRow extends StatelessWidget {
                 ),
               ),
 
-              // Nilai + bar
               Expanded(
                 flex: 2,
                 child: Row(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:dio/dio.dart'; // Import Dio untuk Exception Handling
+import '../services/api_service.dart'; // Import ApiService
 import 'dashboard_page.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
@@ -19,64 +19,51 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePass = true;
 
   // ─── Colors ───────────────────────────────────────────────────────────────
-  static const Color _blue      = Color(0xFF2563EB);
-  static const Color _blueDark  = Color(0xFF1E3A8A);
-  static const Color _blueDeep  = Color(0xFF1D4ED8);
-  static const Color _textMain  = Color(0xFF1E293B);
-  static const Color _textSub   = Color(0xFF64748B);
-  static const Color _border    = Color(0xFFE2E8F0);
-  static const Color _inputBg   = Color(0xFFF8FAFC);
+  static const Color _blue = Color(0xFF2563EB);
+  static const Color _textMain = Color(0xFF1E293B);
+  static const Color _textSub = Color(0xFF64748B);
+  static const Color _border = Color(0xFFE2E8F0);
+  static const Color _inputBg = Color(0xFFF8FAFC);
 
-  // ─── FUNGSI VALIDASI GMAIL ───
   bool _isValidEmail(String email) {
     return RegExp(r"^[a-zA-Z0-9.]+@gmail\.com$").hasMatch(email);
   }
 
+  // ── Logic Bersih dengan ApiService ─────────────────────────────
   Future<void> _handleLogin() async {
-    // 1. Cek jika kosong
     if (_userController.text.isEmpty || _passController.text.isEmpty) {
       _showMsg("Email dan password tidak boleh kosong!", Colors.orange);
       return;
     }
 
-    // 2. Cek validasi @gmail.com
     if (!_isValidEmail(_userController.text.trim())) {
       _showMsg("Gunakan format email @gmail.com yang valid!", Colors.red);
       return;
     }
 
     setState(() => _isLoading = true);
+    
     try {
-      final response = await http.post(
-        Uri.parse("http://127.0.0.1:5000/api/login"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": _userController.text.trim(),
-          "password": _passController.text,
-        }),
-      );
+      final response = await ApiService.dio.post("/login", data: {
+        "email": _userController.text.trim(),
+        "password": _passController.text,
+      });
 
       if (!mounted) return;
-      final res = jsonDecode(response.body);
+      
+      final res = response.data;
+      Map userData = res['user'];
+      String namaTampilan = userData['username'] ?? "User";
 
-  if (response.statusCode == 200) {
-        // AMBIL DATA USER DARI RESPONSE
-        Map userData = res['user'];
-        
-        // REVISI: Pastikan kita mengambil 'username' sebagai nama tampilan
-        String namaTampilan = userData['username'] ?? "User";
-
-        _showMsg("Selamat datang, $namaTampilan!", Colors.green);
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashboardPage(user: userData),
-          ),
-        );
-      } else {
-        _showMsg(res['message'] ?? "Login Gagal", Colors.red);
-      }
+      _showMsg("Selamat datang, $namaTampilan!", Colors.green);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardPage(user: userData)),
+      );
+      
+    } on DioException catch (e) {
+      if (!mounted) return;
+      _showMsg(e.response?.data['message'] ?? "Email atau Password salah!", Colors.red);
     } catch (e) {
       if (!mounted) return;
       _showMsg("Koneksi ke server gagal!", Colors.red);
@@ -102,7 +89,6 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Row(
         children: [
-          // ═══════════════ LEFT PANEL ═══════════════
           Expanded(
             flex: 5,
             child: Container(
@@ -115,7 +101,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
               child: Stack(
                 children: [
-                  // Decorative circles
                   Positioned(
                     top: -60,
                     right: -60,
@@ -131,15 +116,14 @@ class _LoginPageState extends State<LoginPage> {
                     right: 40,
                     child: _decorCircle(100, Colors.white.withOpacity(0.07)),
                   ),
-
-                  // Content
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 48, vertical: 52),
+                      horizontal: 48,
+                      vertical: 52,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Logo row
                         Row(
                           children: [
                             Container(
@@ -149,21 +133,31 @@ class _LoginPageState extends State<LoginPage> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.school_rounded,
-                                  color: _blue, size: 26),
+                              child: const Icon(
+                                Icons.school_rounded,
+                                color: _blue,
+                                size: 26,
+                              ),
                             ),
                             const SizedBox(width: 14),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: const [
-                                Text("SPK Kinerja Guru",
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Text("Sistem Pendukung Keputusan",
-                                    style: TextStyle(
-                                        color: Colors.white60, fontSize: 11)),
+                                Text(
+                                  "SPK Kinerja Guru",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  "Sistem Pendukung Keputusan",
+                                  style: TextStyle(
+                                    color: Colors.white60,
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -171,7 +165,6 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 60),
 
-                        // Headline
                         const Text(
                           "Sistem Penilaian\nKinerja Guru",
                           style: TextStyle(
@@ -185,14 +178,14 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           "Mendukung penilaian kinerja guru secara\nobjektif, transparan, dan berkelanjutan.",
                           style: TextStyle(
-                              color: Colors.white.withOpacity(0.75),
-                              fontSize: 14,
-                              height: 1.6),
+                            color: Colors.white.withOpacity(0.75),
+                            fontSize: 14,
+                            height: 1.6,
+                          ),
                         ),
 
                         const SizedBox(height: 48),
 
-                        // Feature list
                         _featureItem(
                           Icons.verified_user_rounded,
                           "Penilaian Objektif",
@@ -220,7 +213,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // ═══════════════ RIGHT FORM ═══════════════
           Expanded(
             flex: 4,
             child: Container(
@@ -228,7 +220,9 @@ class _LoginPageState extends State<LoginPage> {
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 40, vertical: 48),
+                    horizontal: 40,
+                    vertical: 48,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.all(40),
                     decoration: BoxDecoration(
@@ -246,7 +240,6 @@ class _LoginPageState extends State<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Icon & title
                         Center(
                           child: Container(
                             width: 72,
@@ -255,8 +248,11 @@ class _LoginPageState extends State<LoginPage> {
                               color: const Color(0xFFEFF6FF),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(Icons.school_rounded,
-                                color: _blue, size: 38),
+                            child: const Icon(
+                              Icons.school_rounded,
+                              color: _blue,
+                              size: 38,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -275,35 +271,38 @@ class _LoginPageState extends State<LoginPage> {
                         const Center(
                           child: Text(
                             "Silakan masuk menggunakan email Gmail",
-                            style: TextStyle(
-                                color: _textSub, fontSize: 13.5),
+                            style: TextStyle(color: _textSub, fontSize: 13.5),
                           ),
                         ),
 
                         const SizedBox(height: 36),
 
-                        // Username field diubah menjadi Email
-                        const Text("Email Gmail",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13.5,
-                                color: _textMain)),
+                        const Text(
+                          "Email Gmail",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                            color: _textMain,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         _inputField(
                           controller: _userController,
                           hint: "contoh@gmail.com",
                           icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress, // Memunculkan keyboard @ di HP
+                          keyboardType: TextInputType.emailAddress,
                         ),
 
                         const SizedBox(height: 20),
 
-                        // Password field
-                        const Text("Password",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13.5,
-                                color: _textMain)),
+                        const Text(
+                          "Password",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                            color: _textMain,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         _inputField(
                           controller: _passController,
@@ -314,28 +313,36 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 28),
 
-
-                // Letakkan ini tepat di bawah _inputField untuk Password di login_page.dart
-                Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                onPressed: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage()));
-                },
-                child: const Text("Lupa Password?", style: TextStyle(color: _blue, fontWeight: FontWeight.w600)),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ForgotPasswordPage(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Lupa Password?",
+                              style: TextStyle(
+                                color: _blue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
-                ),
-                const SizedBox(height: 16), // Jarak ke tombol Login
-
-
-                        // Login button
+                        const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           height: 52,
                           child: _isLoading
                               ? const Center(
                                   child: CircularProgressIndicator(
-                                      color: _blue))
+                                    color: _blue,
+                                  ),
+                                )
                               : ElevatedButton(
                                   onPressed: _handleLogin,
                                   style: ElevatedButton.styleFrom(
@@ -343,43 +350,47 @@ class _LoginPageState extends State<LoginPage> {
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(14),
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
                                   child: const Text(
                                     "LOGIN",
                                     style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.5),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.5,
+                                    ),
                                   ),
                                 ),
                         ),
 
                         const SizedBox(height: 20),
 
-                        // Divider
                         Row(
                           children: [
                             Expanded(
-                                child: Divider(color: Colors.grey.shade200)),
+                              child: Divider(color: Colors.grey.shade200),
+                            ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: Text("atau",
-                                  style: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 13)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                "atau",
+                                style: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                             Expanded(
-                                child: Divider(color: Colors.grey.shade200)),
+                              child: Divider(color: Colors.grey.shade200),
+                            ),
                           ],
                         ),
 
                         const SizedBox(height: 20),
 
-                        // Register button
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -388,20 +399,28 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (_) => const RegisterPage()),
+                                  builder: (_) => const RegisterPage(),
+                                ),
                               );
                             },
-                            icon: const Icon(Icons.person_add_outlined,
-                                size: 18, color: _blue),
+                            icon: const Icon(
+                              Icons.person_add_outlined,
+                              size: 18,
+                              color: _blue,
+                            ),
                             label: const Text(
                               "Belum punya akun? Daftar di sini",
                               style: TextStyle(
-                                  color: _blue,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.5),
+                                color: _blue,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                              ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: _border, width: 1.5),
+                              side: const BorderSide(
+                                color: _border,
+                                width: 1.5,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -420,19 +439,17 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
   Widget _inputField({
     required TextEditingController controller,
     required String hint,
     required IconData icon,
     bool isPassword = false,
-    TextInputType keyboardType = TextInputType.text, // Parameter baru untuk keyboard
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword && _obscurePass,
-      keyboardType: keyboardType, // Digunakan di sini
+      keyboardType: keyboardType,
       style: const TextStyle(fontSize: 14, color: _textMain),
       decoration: InputDecoration(
         hintText: hint,
@@ -447,14 +464,15 @@ class _LoginPageState extends State<LoginPage> {
                   color: _textSub,
                   size: 20,
                 ),
-                onPressed: () =>
-                    setState(() => _obscurePass = !_obscurePass),
+                onPressed: () => setState(() => _obscurePass = !_obscurePass),
               )
             : null,
         filled: true,
         fillColor: _inputBg,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _border),
@@ -485,17 +503,23 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14)),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12.5,
-                      height: 1.5)),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 12.5,
+                  height: 1.5,
+                ),
+              ),
             ],
           ),
         ),
