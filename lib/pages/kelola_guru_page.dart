@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:dio/dio.dart'; 
 
 class KelolaGuruPage extends StatefulWidget {
   const KelolaGuruPage({super.key});
@@ -13,40 +12,48 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
   List gurus = [];
   bool _isLoading = true;
 
+  // Instance Dio dan URL Railway
+  final Dio _dio = Dio();
+  final String baseUrl = "https://web-production-1379e.up.railway.app/api";
+
   @override
   void initState() {
     super.initState();
     fetchGuru();
   }
 
-  // 1. AMBIL DATA GURU
+  // 1. AMBIL DATA GURU (Endpoint sudah diperbaiki menjadi /guru)
   Future<void> fetchGuru() async {
     setState(() => _isLoading = true);
     try {
-      final res = await http.get(Uri.parse("http://127.0.0.1:5000/api/daftar-guru"));
+      final res = await _dio.get("$baseUrl/guru"); // <-- FIXED: dari /daftar-guru menjadi /guru
       if (res.statusCode == 200) {
         setState(() {
-          gurus = jsonDecode(res.body);
+          gurus = res.data; 
           _isLoading = false;
         });
       }
+    } on DioException catch (e) {
+      setState(() => _isLoading = false);
+      debugPrint("=== ERROR FETCH GURU ===");
+      debugPrint("Pesan: ${e.message}");
+      _showSnackBar("Gagal API: ${e.response?.statusCode}", Colors.red);
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar("Gagal mengambil data: $e", Colors.red);
+      _showSnackBar("Terjadi error sistem, cek console!", Colors.red);
     }
   }
 
   // 2. FUNGSI UPDATE GURU
   Future<void> updateGuru(int id, String nama, String nip, String kelas) async {
     try {
-      final res = await http.put(
-        Uri.parse("http://127.0.0.1:5000/api/guru/update/$id"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+      final res = await _dio.put(
+        "$baseUrl/guru/update/$id",
+        data: {
           "nama_guru": nama,
           "nip": nip,
           "kelas": kelas,
-        }),
+        },
       );
 
       if (res.statusCode == 200) {
@@ -61,7 +68,7 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
   // 3. FUNGSI HAPUS GURU
   Future<void> deleteGuru(int id) async {
     try {
-      final res = await http.delete(Uri.parse("http://127.0.0.1:5000/api/guru/delete/$id"));
+      final res = await _dio.delete("$baseUrl/guru/delete/$id");
       if (res.statusCode == 200) {
         _showSnackBar("Guru berhasil dihapus", Colors.orange);
         fetchGuru();
@@ -81,16 +88,30 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Edit Data Guru"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: "Nama Guru")),
-            TextField(controller: nipController, decoration: const InputDecoration(labelText: "NIP")),
-            TextField(controller: kelasController, decoration: const InputDecoration(labelText: "Kelas")),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Nama Guru"),
+              ),
+              TextField(
+                controller: nipController,
+                decoration: const InputDecoration(labelText: "NIP"),
+              ),
+              TextField(
+                controller: kelasController,
+                decoration: const InputDecoration(labelText: "Kelas"),
+              ),
+            ],
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
           ElevatedButton(
             onPressed: () {
               updateGuru(
@@ -109,7 +130,9 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
   }
 
   void _showSnackBar(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: color),
+    );
   }
 
   @override
@@ -120,52 +143,76 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: gurus.length,
-              itemBuilder: (context, i) => Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  title: Text(gurus[i]['nama_guru'] ?? "Tanpa Nama", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("NIP: ${gurus[i]['nip']}\nKelas: ${gurus[i]['kelas']}"),
-                  isThreeLine: true,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // TOMBOL EDIT
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showEditDialog(gurus[i]),
+      // Mencegah konten melar di layar Web/Laptop
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  itemCount: gurus.length,
+                  itemBuilder: (context, i) => Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      title: Text(
+                        gurus[i]['nama_guru'] ?? "Tanpa Nama",
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      // TOMBOL HAPUS
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text("Konfirmasi Hapus"),
-                              content: Text("Yakin ingin menghapus ${gurus[i]['nama_guru']}?"),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
-                                TextButton(
-                                  onPressed: () {
-                                    deleteGuru(gurus[i]['id_guru']);
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+                      subtitle: Text(
+                        "NIP: ${gurus[i]['nip']}\nKelas: ${gurus[i]['kelas']}",
+                        style: const TextStyle(height: 1.5),
+                      ),
+                      isThreeLine: true,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+                            onPressed: () => _showEditDialog(gurus[i]),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("Konfirmasi Hapus"),
+                                  content: Text(
+                                    "Yakin ingin menghapus ${gurus[i]['nama_guru']}?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text("Batal"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        deleteGuru(gurus[i]['id_guru']);
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text(
+                                        "Hapus",
+                                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                        },
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
+        ),
+      ),
     );
   }
 }

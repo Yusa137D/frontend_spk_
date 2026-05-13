@@ -13,7 +13,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   final _otpController = TextEditingController();
   final _newPassController = TextEditingController();
-  
+
   final Dio _dio = Dio();
   bool _isLoading = false;
   bool _obscurePass = true;
@@ -50,7 +50,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
     try {
       final response = await _dio.post(
-        "http://127.0.0.1:5000/api/forgot-password",
+        "https://web-production-1379e.up.railway.app/api/forgot-password",
         data: {"email": email},
       );
 
@@ -88,12 +88,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
     try {
       final response = await _dio.post(
-        "http://127.0.0.1:5000/api/reset-password",
-        data: {
-          "email": email,
-          "otp": otp,
-          "new_password": newPass
-        },
+        "https://web-production-1379e.up.railway.app/api/reset-password",
+        data: {"email": email, "otp": otp, "new_password": newPass},
       );
 
       if (response.statusCode == 200) {
@@ -136,7 +132,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.grey.shade200, blurRadius: 30, offset: const Offset(0, 10))
+                BoxShadow(
+                  color: Colors.grey.shade200,
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
               ],
             ),
             child: Column(
@@ -148,62 +148,95 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(Icons.lock_reset_rounded, color: _blue, size: 48),
+                  child: const Icon(
+                    Icons.lock_reset_rounded,
+                    color: _blue,
+                    size: 48,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  _step == 1 ? "Lupa Password?" : "Verifikasi OTP", 
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _textMain),
+                  _step == 1 ? "Lupa Password?" : "Verifikasi OTP",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: _textMain,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  _step == 1 
-                    ? "Masukkan email terdaftar Anda. Kami akan mengirimkan kode pemulihan ke nomor WhatsApp yang terhubung dengan email ini." 
-                    : "Masukkan kode 6 digit yang baru saja kami kirim ke WhatsApp Anda.",
-                  textAlign: TextAlign.center, 
-                  style: const TextStyle(color: Colors.grey, fontSize: 13.5, height: 1.5),
+                  _step == 1
+                      ? "Masukkan email terdaftar Anda. Kami akan mengirimkan kode pemulihan ke nomor WhatsApp yang terhubung dengan email ini."
+                      : "Masukkan kode 6 digit yang baru saja kami kirim ke WhatsApp Anda.",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13.5,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 36),
-                
+
                 // --- KONDISI TAHAP 1 (MINTA OTP) ---
                 if (_step == 1) ...[
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Email Terdaftar", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain)),
+                    child: Text(
+                      "Email Terdaftar",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                        color: _textMain,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _inputField(
-                    controller: _emailController, 
-                    hint: "contoh@gmail.com", 
+                    controller: _emailController,
+                    hint: "contoh@gmail.com",
                     icon: Icons.email_outlined,
                     type: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 32),
                   _actionBtn("KIRIM KODE OTP (VIA WA)", _requestOTP),
-                ] 
+                ]
                 // --- KONDISI TAHAP 2 (INPUT OTP & PASSWORD BARU) ---
                 else ...[
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Kode OTP WhatsApp", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain)),
+                    child: Text(
+                      "Kode OTP WhatsApp",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                        color: _textMain,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _inputField(
-                    controller: _otpController, 
-                    hint: "Masukkan 6 digit angka", 
-                    icon: Icons.pin_outlined, 
+                    controller: _otpController,
+                    hint: "Masukkan 6 digit angka",
+                    icon: Icons.pin_outlined,
                     type: TextInputType.number,
                   ),
                   const SizedBox(height: 20),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Password Baru", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain)),
+                    child: Text(
+                      "Password Baru",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                        color: _textMain,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _inputField(
-                    controller: _newPassController, 
-                    hint: "Minimal 6 karakter", 
-                    icon: Icons.lock_outline_rounded, 
+                    controller: _newPassController,
+                    hint: "Minimal 6 karakter",
+                    icon: Icons.lock_outline_rounded,
                     isPassword: true,
                   ),
                   const SizedBox(height: 32),
@@ -214,10 +247,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       _step = 1;
                       _otpController.clear();
                       _newPassController.clear();
-                    }), 
-                    child: const Text("Ganti Email / Kirim Ulang", style: TextStyle(color: _blue)),
+                    }),
+                    child: const Text(
+                      "Ganti Email / Kirim Ulang",
+                      style: TextStyle(color: _blue),
+                    ),
                   ),
-                ]
+                ],
               ],
             ),
           ),
@@ -227,7 +263,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   // ── Helpers ──
-  Widget _inputField({required TextEditingController controller, required String hint, required IconData icon, bool isPassword = false, TextInputType type = TextInputType.text}) {
+  Widget _inputField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType type = TextInputType.text,
+  }) {
     return TextField(
       controller: controller,
       obscureText: isPassword && _obscurePass,
@@ -237,37 +279,60 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFFB0BEC5)),
         prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 20),
-        suffixIcon: isPassword 
+        suffixIcon: isPassword
             ? IconButton(
-                icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey.shade500, size: 20), 
-                onPressed: () => setState(() => _obscurePass = !_obscurePass)
-              ) 
+                icon: Icon(
+                  _obscurePass
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.grey.shade500,
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _obscurePass = !_obscurePass),
+              )
             : null,
         filled: true,
         fillColor: _inputBg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _blue, width: 1.8)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _blue, width: 1.8),
+        ),
       ),
     );
   }
 
   Widget _actionBtn(String label, VoidCallback action) {
     return SizedBox(
-      width: double.infinity, 
+      width: double.infinity,
       height: 52,
-      child: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: _blue)) 
-        : ElevatedButton(
-            onPressed: action,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _blue, 
-              foregroundColor: Colors.white, 
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: _blue))
+          : ElevatedButton(
+              onPressed: action,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _blue,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
             ),
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1.2)),
-          ),
     );
   }
 }

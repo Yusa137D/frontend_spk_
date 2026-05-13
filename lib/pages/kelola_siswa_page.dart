@@ -27,7 +27,9 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
   Future<void> fetchDaftarSiswa() async {
     setState(() => isLoading = true);
     try {
-      final response = await dio.get('http://127.0.0.1:5000/api/daftar-siswa');
+      final response = await dio.get(
+        'https://web-production-1379e.up.railway.app/api/daftar-siswa',
+      );
       if (response.statusCode == 200) {
         setState(() => daftarSiswa = response.data);
       }
@@ -39,11 +41,22 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
   }
 
   // --- FUNGSI UPDATE DATA ---
-  Future<void> updateSiswa(int idUser, String nama, String nisn, String kelas, String email) async {
+  Future<void> updateSiswa(
+    int idUser,
+    String nama,
+    String nisn,
+    String kelas,
+    String email,
+  ) async {
     try {
       final response = await dio.put(
-        'http://127.0.0.1:5000/api/update-siswa/$idUser',
-        data: {"nama_siswa": nama, "nisn": nisn, "kelas": kelas, "email": email},
+        'https://web-production-1379e.up.railway.app/api/update-siswa/$idUser',
+        data: {
+          "nama_siswa": nama,
+          "nisn": nisn,
+          "kelas": kelas,
+          "email": email,
+        },
       );
       if (response.statusCode == 200) {
         fetchDaftarSiswa(); // Refresh list
@@ -65,7 +78,10 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Edit Data Siswa", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Edit Data Siswa",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -78,11 +94,28 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Batal"),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _accent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            onPressed: () => updateSiswa(siswa['id_user'], nameCtrl.text, nisnCtrl.text, kelasCtrl.text, emailCtrl.text),
-            child: const Text("Simpan Perubahan", style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _accent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => updateSiswa(
+              siswa['id_user'],
+              nameCtrl.text,
+              nisnCtrl.text,
+              kelasCtrl.text,
+              emailCtrl.text,
+            ),
+            child: const Text(
+              "Simpan Perubahan",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -105,7 +138,9 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
 
   Future<void> hapusSiswa(int idUser) async {
     try {
-      final response = await dio.delete('http://127.0.0.1:5000/api/hapus-siswa/$idUser');
+      final response = await dio.delete(
+        'https://web-production-1379e.up.railway.app/api/hapus-siswa/$idUser',
+      );
       if (response.statusCode == 200) fetchDaftarSiswa();
     } catch (e) {
       debugPrint("Gagal Hapus: $e");
@@ -117,8 +152,13 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Kelola Siswa', style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary)),
-        backgroundColor: _bg, elevation: 0, iconTheme: const IconThemeData(color: _textPrimary),
+        title: const Text(
+          'Kelola Siswa',
+          style: TextStyle(fontWeight: FontWeight.w700, color: _textPrimary),
+        ),
+        backgroundColor: _bg,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: _textPrimary),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: _accent))
@@ -129,19 +169,61 @@ class _KelolaSiswaPageState extends State<KelolaSiswaPage> {
                 final siswa = daftarSiswa[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 10, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(
+                    color: _cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade200,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    leading: CircleAvatar(backgroundColor: const Color(0xFFF5F3FF), child: Text(siswa['nama_siswa'][0].toUpperCase(), style: const TextStyle(color: _accent, fontWeight: FontWeight.bold))),
-                    title: Text(siswa['nama_siswa'], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                    subtitle: Text("NISN: ${siswa['nisn']} • Kelas: ${siswa['kelas']}"),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFF5F3FF),
+                      child: Text(
+                        siswa['nama_siswa'][0].toUpperCase(),
+                        style: const TextStyle(
+                          color: _accent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      siswa['nama_siswa'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "NISN: ${siswa['nisn']} • Kelas: ${siswa['kelas']}",
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // TOMBOL EDIT
-                        IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.orange), onPressed: () => showEditDialog(siswa)),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.edit_outlined,
+                            color: Colors.orange,
+                          ),
+                          onPressed: () => showEditDialog(siswa),
+                        ),
                         // TOMBOL HAPUS
-                        IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Colors.red), onPressed: () => hapusSiswa(siswa['id_user'])),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.red,
+                          ),
+                          onPressed: () => hapusSiswa(siswa['id_user']),
+                        ),
                       ],
                     ),
                   ),
