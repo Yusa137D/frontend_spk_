@@ -5,7 +5,8 @@ class ApiService {
   // Instance Dio terpusat
   static final Dio dio = Dio(
     BaseOptions(
-      baseUrl: "http://127.0.0.1:5000/api",
+      // GANTI titik koma (;) jadi koma (,) di akhir baris baseUrl
+      baseUrl: "https://web-production-1379e.up.railway.app/api", 
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {"Content-Type": "application/json"},
@@ -17,7 +18,9 @@ class ApiService {
     try {
       final res = await dio.get("/dashboard-stats");
       if (res.statusCode == 200) return res.data;
-    } catch (e) { debugPrint("Error getDashboardStats: $e"); }
+    } catch (e) { 
+      debugPrint("Error getDashboardStats: $e"); 
+    }
     return null;
   }
 
@@ -26,16 +29,20 @@ class ApiService {
     try {
       final res = await dio.get("/nilai-saya/$idUser");
       if (res.statusCode == 200) return res.data;
-    } catch (e) { debugPrint("Error getNilaiGuru: $e"); }
+    } catch (e) { 
+      debugPrint("Error getNilaiGuru: $e"); 
+    }
     return null;
   }
 
-  // 3. Ambil Daftar Guru (Dengan parameter ID User untuk cek status)
+  // 3. Ambil Daftar Guru
   static Future<List?> getDaftarGuru(int idUser) async {
     try {
       final res = await dio.get("/daftar-guru/$idUser");
       if (res.statusCode == 200) return res.data;
-    } catch (e) { debugPrint("Error getDaftarGuru: $e"); }
+    } catch (e) { 
+      debugPrint("Error getDaftarGuru: $e"); 
+    }
     return null;
   }
 
@@ -44,7 +51,9 @@ class ApiService {
     try {
       final res = await dio.get("/pertanyaan");
       if (res.statusCode == 200) return res.data;
-    } catch (e) { debugPrint("Error getPertanyaan: $e"); }
+    } catch (e) { 
+      debugPrint("Error getPertanyaan: $e"); 
+    }
     return null;
   }
 
@@ -52,8 +61,11 @@ class ApiService {
   static Future<bool> simpanJawaban(List payload) async {
     try {
       final res = await dio.post("/simpan-jawaban", data: payload);
-      return res.statusCode == 200;
-    } catch (e) { debugPrint("Error simpanJawaban: $e"); }
+      // Railway kadang mengembalikan 201 untuk proses create/simpan
+      return res.statusCode == 200 || res.statusCode == 201;
+    } catch (e) { 
+      debugPrint("Error simpanJawaban: $e"); 
+    }
     return false;
   }
 
@@ -62,7 +74,9 @@ class ApiService {
     try {
       final res = await dio.get("/hitung-topsis");
       if (res.statusCode == 200) return res.data;
-    } catch (e) { debugPrint("Error getRankingTopsis: $e"); }
+    } catch (e) { 
+      debugPrint("Error getRankingTopsis: $e"); 
+    }
     return null;
   }
 }
