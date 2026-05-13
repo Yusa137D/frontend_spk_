@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart'; 
+import 'package:dio/dio.dart';
 
 class KelolaGuruPage extends StatefulWidget {
   const KelolaGuruPage({super.key});
@@ -22,11 +22,11 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
     fetchGuru();
   }
 
-  // 1. AMBIL DATA GURU (Endpoint sudah diperbaiki menjadi /guru)
+  // 1. AMBIL DATA GURU
   Future<void> fetchGuru() async {
     setState(() => _isLoading = true);
     try {
-      final res = await _dio.get("$baseUrl/guru"); // <-- FIXED: dari /daftar-guru menjadi /guru
+      final res = await _dio.get("$baseUrl/guru"); 
       if (res.statusCode == 200) {
         setState(() {
           gurus = res.data; 
@@ -35,8 +35,6 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
       }
     } on DioException catch (e) {
       setState(() => _isLoading = false);
-      debugPrint("=== ERROR FETCH GURU ===");
-      debugPrint("Pesan: ${e.message}");
       _showSnackBar("Gagal API: ${e.response?.statusCode}", Colors.red);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -58,7 +56,7 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
 
       if (res.statusCode == 200) {
         _showSnackBar("Data guru berhasil diperbarui", Colors.green);
-        fetchGuru(); // Refresh data
+        fetchGuru(); 
       }
     } catch (e) {
       _showSnackBar("Gagal memperbarui data", Colors.red);
@@ -78,7 +76,7 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
     }
   }
 
-  // DIALOG EDIT GURU
+  // DIALOG EDIT GURU (RESPONSIF MOBILE)
   void _showEditDialog(Map guru) {
     final nameController = TextEditingController(text: guru['nama_guru']);
     final nipController = TextEditingController(text: guru['nip']);
@@ -87,32 +85,55 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Edit Data Guru"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Edit Data Guru", style: TextStyle(fontWeight: FontWeight.bold)),
+        // SingleChildScrollView agar form bisa di-scroll saat keyboard HP muncul
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Nama Guru"),
-              ),
-              TextField(
-                controller: nipController,
-                decoration: const InputDecoration(labelText: "NIP"),
-              ),
-              TextField(
-                controller: kelasController,
-                decoration: const InputDecoration(labelText: "Kelas"),
-              ),
-            ],
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom, // Menghindari tertutup keyboard
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: "Nama Guru",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nipController,
+                  decoration: InputDecoration(
+                    labelText: "NIP",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: kelasController,
+                  decoration: InputDecoration(
+                    labelText: "Kelas",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Batal"),
+            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             onPressed: () {
               updateGuru(
                 guru['id_guru'],
@@ -131,86 +152,114 @@ class _KelolaGuruPageState extends State<KelolaGuruPage> {
 
   void _showSnackBar(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
+      SnackBar(
+        content: Text(msg), 
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating, // Snackbar melayang keren di HP
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF1F5F9), // Latar belakang abu-abu muda khas dashboard modern
       appBar: AppBar(
-        title: const Text("Kelola Guru"),
+        title: const Text("Kelola Guru", style: TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      // Mencegah konten melar di layar Web/Laptop
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  itemCount: gurus.length,
-                  itemBuilder: (context, i) => Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      title: Text(
-                        gurus[i]['nama_guru'] ?? "Tanpa Nama",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      subtitle: Text(
-                        "NIP: ${gurus[i]['nip']}\nKelas: ${gurus[i]['kelas']}",
-                        style: const TextStyle(height: 1.5),
-                      ),
-                      isThreeLine: true,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                            onPressed: () => _showEditDialog(gurus[i]),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text("Konfirmasi Hapus"),
-                                  content: Text(
-                                    "Yakin ingin menghapus ${gurus[i]['nama_guru']}?",
+      // SafeArea agar konten tidak menabrak status bar atau poni layar HP
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800), // Membatasi lebar maksimal di Laptop
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: Colors.indigo))
+                : gurus.isEmpty 
+                    ? const Center(child: Text("Belum ada data guru", style: TextStyle(color: Colors.grey)))
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(), // Efek scroll empuk khas mobile
+                        padding: const EdgeInsets.all(16),
+                        itemCount: gurus.length,
+                        itemBuilder: (context, i) {
+                          final guru = gurus[i];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: Colors.grey.shade200),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.indigo.withOpacity(0.1),
+                                  child: const Icon(Icons.person, color: Colors.indigo),
+                                ),
+                                title: Text(
+                                  guru['nama_guru'] ?? "Tanpa Nama",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text(
+                                    "NIP: ${guru['nip']}\nKelas: ${guru['kelas']}",
+                                    style: TextStyle(height: 1.4, color: Colors.grey.shade700),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text("Batal"),
+                                ),
+                                isThreeLine: true,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_rounded, color: Colors.blue),
+                                      onPressed: () => _showEditDialog(guru),
+                                      tooltip: "Edit Guru",
                                     ),
-                                    TextButton(
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_rounded, color: Colors.red),
                                       onPressed: () {
-                                        deleteGuru(gurus[i]['id_guru']);
-                                        Navigator.pop(context);
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            title: const Text("Konfirmasi Hapus", style: TextStyle(fontWeight: FontWeight.bold)),
+                                            content: Text("Yakin ingin menghapus ${guru['nama_guru']}? Data yang dihapus tidak bisa dikembalikan."),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context),
+                                                child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.red,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                ),
+                                                onPressed: () {
+                                                  deleteGuru(guru['id_guru']);
+                                                  Navigator.pop(context);
+                                                },
+                                                child: const Text("Hapus"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
                                       },
-                                      child: const Text(
-                                        "Hapus",
-                                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                                      ),
+                                      tooltip: "Hapus Guru",
                                     ),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
-                        ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                ),
+          ),
         ),
       ),
     );

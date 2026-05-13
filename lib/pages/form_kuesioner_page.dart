@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart'; // Import memori lokal
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
 class FormKuesionerPage extends StatefulWidget {
   final int idSiswa, idGuru;
-  final String namaGuru, nipGuru; // FIX: Menambahkan parameter NIP
+  final String namaGuru, nipGuru;
   
   const FormKuesionerPage({
     super.key,
@@ -36,9 +36,7 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
     fetchPertanyaanDanDraft();
   }
 
-  // ── FIX: Ambil Pertanyaan sekaligus Cek apakah ada Draft Tersimpan ──
   Future<void> fetchPertanyaanDanDraft() async {
-    // 1. Ambil pertanyaan dari API
     final data = await ApiService.getPertanyaan();
     if (data != null && mounted) {
       setState(() {
@@ -47,7 +45,6 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
       });
     }
 
-    // 2. Cek Draft di Memori Lokal
     final prefs = await SharedPreferences.getInstance();
     final draftStr = prefs.getString('draft_${widget.idSiswa}_${widget.idGuru}');
     
@@ -59,10 +56,8 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
     }
   }
 
-  // ── FIX: Fungsi Simpan Draft ──
   Future<void> simpanDraft() async {
     final prefs = await SharedPreferences.getInstance();
-    // Ubah map jadi string JSON untuk disimpan
     final draftStr = jsonEncode(answers.map((key, value) => MapEntry(key.toString(), value)));
     await prefs.setString('draft_${widget.idSiswa}_${widget.idGuru}', draftStr);
 
@@ -78,10 +73,9 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
-    Navigator.pop(context); // Keluar form setelah nyimpan draft
+    Navigator.pop(context);
   }
 
-  // ── Kirim Penilaian ──
   Future<void> submit() async {
     List payload = answers.entries.map((e) => {
       "id_user": widget.idSiswa,
@@ -95,7 +89,6 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
     if (mounted) setState(() => _isSubmitting = false);
 
     if (success && mounted) {
-      // FIX: Kalau sudah dikirim, hapus draft lokalnya
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('draft_${widget.idSiswa}_${widget.idGuru}');
 
@@ -118,7 +111,6 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
   int get _total    => questions.length;
   bool get _allAnswered => _answered == _total && _total > 0;
 
-  // ── FIX: Bikin Tanggal Otomatis ──
   String _getBulan(int month) {
     const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     return bulan[month - 1];
@@ -129,7 +121,11 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: _buildAppBar(),
-      body: _isLoading ? const Center(child: CircularProgressIndicator(color: kPrimary)) : _buildBody(),
+      body: SafeArea(
+        child: _isLoading 
+            ? const Center(child: CircularProgressIndicator(color: kPrimary)) 
+            : _buildBody(),
+      ),
     );
   }
 
@@ -148,13 +144,15 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
                   child: Container(width: 36, height: 36, decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: kText)),
                 ),
                 const SizedBox(width: 14),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Penilaian: ${widget.namaGuru}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kText)),
-                    const Text('Berikan penilaian berdasarkan kriteria yang telah ditentukan.', style: TextStyle(fontSize: 11, color: kSubtext)),
-                  ],
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Penilaian: ${widget.namaGuru}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kText), overflow: TextOverflow.ellipsis),
+                      const Text('Berikan penilaian berdasarkan kriteria.', style: TextStyle(fontSize: 11, color: kSubtext), overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -169,190 +167,220 @@ class _FormKuesionerPageState extends State<FormKuesionerPage> {
     final bulanStr = _getBulan(now.month);
     final tahunStr = now.year.toString();
 
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 16, offset: const Offset(0, 3))],
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(radius: 32, backgroundColor: kPrimary.withOpacity(0.10), child: const Icon(Icons.person_rounded, color: kPrimary, size: 34)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(widget.namaGuru, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kText)),
-                            const SizedBox(height: 4),
-                            // FIX: Menampilkan NIP yang asli
-                            Text('NIP. ${widget.nipGuru}', style: const TextStyle(fontSize: 12, color: kSubtext)),
-                          ],
-                        ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1000), 
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 16, offset: const Offset(0, 3))],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Wrap(
+                        spacing: 24,
+                        runSpacing: 16,
+                        alignment: WrapAlignment.spaceBetween,
                         children: [
-                          _metaRow('Tanggal Penilaian', _todayFormatted()),
-                          const SizedBox(height: 4),
-                          _metaRow('Penilai', 'Siswa / Anda'),
-                          const SizedBox(height: 4),
-                          // FIX: Menampilkan Periode Otomatis
-                          _metaRow('Periode', '$bulanStr $tahunStr'),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(radius: 32, backgroundColor: kPrimary.withOpacity(0.10), child: const Icon(Icons.person_rounded, color: kPrimary, size: 34)),
+                              const SizedBox(width: 16),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(widget.namaGuru, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kText)),
+                                    const SizedBox(height: 4),
+                                    Text('NIP. ${widget.nipGuru}', style: const TextStyle(fontSize: 12, color: kSubtext)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _metaRow('Tanggal Penilaian', _todayFormatted()),
+                              const SizedBox(height: 4),
+                              _metaRow('Penilai', 'Siswa / Anda'),
+                              const SizedBox(height: 4),
+                              _metaRow('Periode', '$bulanStr $tahunStr'),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(color: kPrimary.withOpacity(0.06), borderRadius: BorderRadius.circular(12), border: Border.all(color: kPrimary.withOpacity(0.15))),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.info_outline_rounded, color: kPrimary, size: 18),
-                      SizedBox(width: 10),
-                      Expanded(child: Text('Berikan penilaian pada setiap aspek dengan memilih skala yang paling sesuai.', style: TextStyle(fontSize: 12, color: kPrimary))),
-                    ],
-                  ),
-                ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(color: kPrimary.withOpacity(0.06), borderRadius: BorderRadius.circular(12), border: Border.all(color: kPrimary.withOpacity(0.15))),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.info_outline_rounded, color: kPrimary, size: 18),
+                          SizedBox(width: 10),
+                          Expanded(child: Text('Berikan penilaian pada setiap aspek dengan memilih skala yang paling sesuai.', style: TextStyle(fontSize: 12, color: kPrimary))),
+                        ],
+                      ),
+                    ),
 
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                Row(
-                  children: [
-                    Text('$_answered / $_total pertanyaan dijawab', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kSubtext)),
-                    const Spacer(),
-                    Text('${_total > 0 ? (_answered / _total * 100).toInt() : 0}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kPrimary)),
+                    Row(
+                      children: [
+                        Text('$_answered / $_total pertanyaan dijawab', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kSubtext)),
+                        const Spacer(),
+                        Text('${_total > 0 ? (_answered / _total * 100).toInt() : 0}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kPrimary)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: _total > 0 ? _answered / _total : 0,
+                        minHeight: 6,
+                        backgroundColor: const Color(0xFFDDE4F0),
+                        valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Container(
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 20, offset: const Offset(0, 4))]),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 800),
+                          child: IntrinsicWidth(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                  child: Row(
+                                    children: const [
+                                      SizedBox(width: 44, child: Text('No.', style: _headerStyle)),
+                                      Expanded(flex: 3, child: Text('Kriteria Penilaian', style: _headerStyle)),
+                                      Expanded(flex: 4, child: Center(child: Text('Skala Penilaian', style: _headerStyle))),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(height: 1, color: Color(0xFFEEF2F9)),
+
+                                ...List.generate(questions.length, (i) {
+                                  final q   = questions[i];
+                                  final id  = q['id'] as int;
+                                  final sel = answers[id];
+                                  return _QuestionRow(
+                                    no: i + 1,
+                                    teks: q['teks'] ?? '',
+                                    deskripsi: q['deskripsi'] ?? '',
+                                    selected: sel,
+                                    isLast: i == questions.length - 1,
+                                    onChanged: (v) => setState(() => answers[id] = v),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: kPrimary.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: kPrimary.withOpacity(0.12))),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.info_outline_rounded, color: kPrimary, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Wrap(
+                              spacing: 16,
+                              children: const [
+                                Text('Keterangan Skala Penilaian:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kText)),
+                                Text('1 = Sangat Kurang', style: TextStyle(fontSize: 12, color: kSubtext)),
+                                Text('2 = Kurang', style: TextStyle(fontSize: 12, color: kSubtext)),
+                                Text('3 = Cukup', style: TextStyle(fontSize: 12, color: kSubtext)),
+                                Text('4 = Baik', style: TextStyle(fontSize: 12, color: kSubtext)),
+                                Text('5 = Sangat Baik', style: TextStyle(fontSize: 12, color: kSubtext)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: _total > 0 ? _answered / _total : 0,
-                    minHeight: 6,
-                    backgroundColor: const Color(0xFFDDE4F0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 20, offset: const Offset(0, 4))]),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        child: Row(
-                          children: const [
-                            SizedBox(width: 44, child: Text('No.', style: _headerStyle)),
-                            Expanded(flex: 3, child: Text('Kriteria Penilaian', style: _headerStyle)),
-                            Expanded(flex: 4, child: Center(child: Text('Skala Penilaian', style: _headerStyle))),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, color: Color(0xFFEEF2F9)),
-
-                      ...List.generate(questions.length, (i) {
-                        final q   = questions[i];
-                        final id  = q['id'] as int;
-                        final sel = answers[id];
-                        return _QuestionRow(
-                          no: i + 1,
-                          teks: q['teks'] ?? '',
-                          deskripsi: q['deskripsi'] ?? '',
-                          selected: sel,
-                          isLast: i == questions.length - 1,
-                          onChanged: (v) => setState(() => answers[id] = v),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: kPrimary.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: kPrimary.withOpacity(0.12))),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.info_outline_rounded, color: kPrimary, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Wrap(
-                          spacing: 16,
-                          children: const [
-                            Text('Keterangan Skala Penilaian:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: kText)),
-                            Text('1 = Sangat Kurang', style: TextStyle(fontSize: 12, color: kSubtext)),
-                            Text('2 = Kurang', style: TextStyle(fontSize: 12, color: kSubtext)),
-                            Text('3 = Cukup', style: TextStyle(fontSize: 12, color: kSubtext)),
-                            Text('4 = Baik', style: TextStyle(fontSize: 12, color: kSubtext)),
-                            Text('5 = Sangat Baik', style: TextStyle(fontSize: 12, color: kSubtext)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+              ),
             ),
-          ),
-        ),
 
-        // ── Action bar ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, -2))]),
-          child: Row(
-            children: [
-              OutlinedButton(
-                onPressed: () => Navigator.maybePop(context),
-                style: OutlinedButton.styleFrom(foregroundColor: kText, side: const BorderSide(color: Color(0xFFDDE4F0)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, -2))]),
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    style: OutlinedButton.styleFrom(foregroundColor: kText, side: const BorderSide(color: Color(0xFFDDE4F0)), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  ),
+                  
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: simpanDraft,
+                        icon: const Icon(Icons.save_outlined, size: 16),
+                        label: const Text('Simpan Draft', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        style: OutlinedButton.styleFrom(foregroundColor: kPrimary, side: BorderSide(color: kPrimary.withOpacity(0.4)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      ),
+                      
+                      ElevatedButton.icon(
+                        onPressed: _allAnswered && !_isSubmitting ? submit : null,
+                        icon: _isSubmitting ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.send_rounded, size: 16),
+                        label: Text(_isSubmitting ? 'Mengirim...' : 'Kirim Penilaian', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(backgroundColor: kPrimary, foregroundColor: Colors.white, disabledBackgroundColor: const Color(0xFFB0C4DE), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const Spacer(),
-              
-              // FIX: Tombol Simpan Draft Sekarang Bekerja
-              OutlinedButton.icon(
-                onPressed: simpanDraft, // Panggil fungsinya
-                icon: const Icon(Icons.save_outlined, size: 16),
-                label: const Text('Simpan Draft', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                style: OutlinedButton.styleFrom(foregroundColor: kPrimary, side: BorderSide(color: kPrimary.withOpacity(0.4)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-              ),
-              
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: _allAnswered && !_isSubmitting ? submit : null,
-                icon: _isSubmitting ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.send_rounded, size: 16),
-                label: Text(_isSubmitting ? 'Mengirim...' : 'Kirim Penilaian', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                style: ElevatedButton.styleFrom(backgroundColor: kPrimary, foregroundColor: Colors.white, disabledBackgroundColor: const Color(0xFFB0C4DE), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _metaRow(String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(width: 120, child: Text(label, style: const TextStyle(fontSize: 12, color: kSubtext))),
         const Text(': ', style: TextStyle(fontSize: 12, color: kSubtext)),

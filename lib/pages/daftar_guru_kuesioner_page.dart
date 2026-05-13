@@ -37,7 +37,6 @@ class _DaftarGuruKuesionerPageState extends State<DaftarGuruKuesionerPage> with 
     super.dispose();
   }
 
-  // ── Logic Bersih dengan ApiService ─────────────────────────────
   Future<void> fetchGuru() async {
     final data = await ApiService.getDaftarGuru(widget.idUser);
     if (data != null && mounted) {
@@ -46,13 +45,12 @@ class _DaftarGuruKuesionerPageState extends State<DaftarGuruKuesionerPage> with 
         _filtered = List.from(listGuru);
         _isLoading = false;
       });
-      _animController.forward(from: 0.0); // Pastikan animasi di-reset agar mulus
+      _animController.forward(from: 0.0);
     } else {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // ── Search filter ─────────────────────────────────────────────
   void _onSearch() {
     final q = _searchCtrl.text.toLowerCase();
     setState(() {
@@ -64,7 +62,6 @@ class _DaftarGuruKuesionerPageState extends State<DaftarGuruKuesionerPage> with 
     });
   }
 
-  // ── Stat helpers ──────────────────────────────────────────────
   int get _totalGuru => listGuru.where((g) => g['id_guru'] != widget.idUser).length;
 
   int get _sudahDinilai => listGuru
@@ -75,7 +72,6 @@ class _DaftarGuruKuesionerPageState extends State<DaftarGuruKuesionerPage> with 
 
   int get _belumDinilai => _totalGuru - _sudahDinilai;
 
-  // ── Build ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,15 +105,16 @@ class _DaftarGuruKuesionerPageState extends State<DaftarGuruKuesionerPage> with 
                   ),
                 ),
                 const SizedBox(width: 14),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Pilih Guru untuk Dinilai', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kText)),
-                    Text('Pilih guru yang akan dilakukan penilaian kinerja.', style: TextStyle(fontSize: 11, color: kSubtext)),
-                  ],
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('Pilih Guru untuk Dinilai', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kText), overflow: TextOverflow.ellipsis),
+                      Text('Pilih guru yang akan dilakukan penilaian kinerja.', style: TextStyle(fontSize: 11, color: kSubtext), overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 GestureDetector(
                   onTap: () {
                     setState(() => _isLoading = true);
@@ -137,162 +134,157 @@ class _DaftarGuruKuesionerPageState extends State<DaftarGuruKuesionerPage> with 
     );
   }
 
-// ── Cari fungsi ini dan copas timpa ──
   Widget _buildBody() {
     final display = _filtered.where((g) => g['id_guru'] != widget.idUser).toList();
 
-    // Setup Waktu Otomatis untuk Stat Card
     final now = DateTime.now();
-    final lastDay = DateTime(now.year, now.month + 1, 0).day; // Mencari hari terakhir di bulan ini
+    final lastDay = DateTime(now.year, now.month + 1, 0).day; 
     const bulanArr = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     final bulanStr = bulanArr[now.month - 1];
     final tahunStr = now.year.toString();
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Container(
-                  height: 46,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 2))]),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    style: const TextStyle(fontSize: 13, color: kText),
-                    decoration: InputDecoration(hintText: 'Cari nama guru atau NIP...', hintStyle: TextStyle(fontSize: 13, color: kSubtext.withOpacity(0.7)), prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF9AABCC), size: 20), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 14)),
-                  ),
+              Container(
+                height: 46,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 2))]),
+                child: TextField(
+                  controller: _searchCtrl,
+                  style: const TextStyle(fontSize: 13, color: kText),
+                  decoration: InputDecoration(hintText: 'Cari nama guru atau NIP...', hintStyle: TextStyle(fontSize: 13, color: kSubtext.withOpacity(0.7)), prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF9AABCC), size: 20), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 14)),
                 ),
               ),
-            ],
-          ),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          Row(
-            children: [
-              _StatCard(
-                icon: Icons.people_alt_rounded,
-                label: 'Total Guru',
-                value: '$_totalGuru',
-                sub: 'Guru terdaftar',
-              ),
-              const SizedBox(width: 14),
-              _StatCard(
-                icon: Icons.assignment_turned_in_rounded,
-                label: 'Sudah Dinilai',
-                value: '$_sudahDinilai',
-                sub: _totalGuru > 0 ? '${(_sudahDinilai / _totalGuru * 100).toStringAsFixed(2)}% dari total guru' : '0% dari total guru',
-                subColor: const Color(0xFF2E7D32),
-              ),
-              const SizedBox(width: 14),
-              _StatCard(
-                icon: Icons.pending_actions_rounded,
-                label: 'Belum Dinilai',
-                value: '$_belumDinilai',
-                sub: _totalGuru > 0 ? '${(_belumDinilai / _totalGuru * 100).toStringAsFixed(2)}% dari total guru' : '0% dari total guru',
-                subColor: const Color(0xFFF57F17),
-              ),
-              const SizedBox(width: 14),
-              _StatCard(
-                icon: Icons.calendar_month_rounded,
-                label: 'Periode Penilaian',
-                // FIX: Tanggal otomatis
-                value: '$bulanStr $tahunStr', 
-                sub: '01 - $lastDay $bulanStr $tahunStr',
-                valueFontSize: 15,
-              ),
-            ],
-          ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  double cardWidth = constraints.maxWidth < 600 ? double.infinity : (constraints.maxWidth / 2) - 10;
+                  if (constraints.maxWidth > 900) cardWidth = (constraints.maxWidth / 4) - 12;
 
-          const SizedBox(height: 24),
-
-          Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 20, offset: const Offset(0, 4))]),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  child: Row(
-                    children: const [
-                      SizedBox(width: 40, child: Text('No', style: _headerStyle)),
-                      Expanded(flex: 3, child: Text('Nama Guru', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('NIP', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('Mata Pelajaran', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('Status Penilaian', style: _headerStyle)),
-                      Expanded(flex: 2, child: Text('Aksi', style: _headerStyle)),
+                  return Wrap(
+                    spacing: 14,
+                    runSpacing: 14,
+                    children: [
+                      _StatCard(icon: Icons.people_alt_rounded, label: 'Total Guru', value: '$_totalGuru', sub: 'Guru terdaftar', width: cardWidth),
+                      _StatCard(icon: Icons.assignment_turned_in_rounded, label: 'Sudah Dinilai', value: '$_sudahDinilai', sub: _totalGuru > 0 ? '${(_sudahDinilai / _totalGuru * 100).toStringAsFixed(2)}% dari total guru' : '0% dari total guru', subColor: const Color(0xFF2E7D32), width: cardWidth),
+                      _StatCard(icon: Icons.pending_actions_rounded, label: 'Belum Dinilai', value: '$_belumDinilai', sub: _totalGuru > 0 ? '${(_belumDinilai / _totalGuru * 100).toStringAsFixed(2)}% dari total guru' : '0% dari total guru', subColor: const Color(0xFFF57F17), width: cardWidth),
+                      _StatCard(icon: Icons.calendar_month_rounded, label: 'Periode Penilaian', value: '$bulanStr $tahunStr', sub: '01 - $lastDay $bulanStr $tahunStr', valueFontSize: 15, width: cardWidth),
                     ],
-                  ),
-                ),
-                const Divider(height: 1, color: Color(0xFFEEF2F9)),
+                  );
+                }
+              ),
 
-                display.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(40),
+              const SizedBox(height: 24),
+
+              // TABEL DATA FIX
+              Container(
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 20, offset: const Offset(0, 4))]),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Cek batas minimal lebar untuk Scroll HP
+                    double tableWidth = constraints.maxWidth < 950 ? 950 : constraints.maxWidth;
+                    
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: SizedBox(
+                        width: tableWidth, // Ukuran pasti
                         child: Column(
                           children: [
-                            Icon(Icons.search_off_rounded, size: 48, color: kSubtext.withOpacity(0.4)),
-                            const SizedBox(height: 8),
-                            const Text('Tidak ada guru ditemukan', style: TextStyle(color: kSubtext)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              child: Row(
+                                children: const [
+                                  SizedBox(width: 40, child: Text('No', style: _headerStyle)),
+                                  Expanded(flex: 3, child: Text('Nama Guru', style: _headerStyle)),
+                                  Expanded(flex: 2, child: Text('NIP', style: _headerStyle)),
+                                  Expanded(flex: 2, child: Text('Mata Pelajaran', style: _headerStyle)),
+                                  Expanded(flex: 2, child: Text('Status Penilaian', style: _headerStyle)),
+                                  Expanded(flex: 2, child: Text('Aksi', style: _headerStyle)),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1, color: Color(0xFFEEF2F9)),
+
+                            display.isEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.all(40),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.search_off_rounded, size: 48, color: kSubtext.withOpacity(0.4)),
+                                        const SizedBox(height: 8),
+                                        const Text('Tidak ada guru ditemukan', style: TextStyle(color: kSubtext)),
+                                      ],
+                                    ),
+                                  )
+                                : Column(
+                                    children: List.generate(display.length, (i) {
+                                      final guru = display[i];
+                                      final delay = i * 0.07;
+                                      final sudah = guru['sudah_dinilai'] == true || guru['sudah_dinilai'] == 1;
+
+                                      return AnimatedBuilder(
+                                        animation: _animController,
+                                        builder: (_, __) {
+                                          final t = (_animController.value - delay).clamp(0.0, 1.0);
+                                          return Opacity(
+                                            opacity: t,
+                                            child: Transform.translate(
+                                              offset: Offset(0, 16 * (1 - t)),
+                                              child: _GuruRow(
+                                                no: i + 1,
+                                                nama: guru['nama_guru'] ?? 'Guru',
+                                                jabatan: guru['jabatan'] ?? '',
+                                                nip: guru['nip'] ?? '-',
+                                                mapel: guru['mata_pelajaran'] ?? '-',
+                                                sudahDinilai: sudah,
+                                                isLast: i == display.length - 1,
+                                                onTap: () async {
+                                                  await Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) => FormKuesionerPage(
+                                                        idSiswa: widget.idUser,
+                                                        idGuru: guru['id_guru'],
+                                                        namaGuru: guru['nama_guru'],
+                                                        nipGuru: guru['nip'] ?? '-', 
+                                                      ),
+                                                    ),
+                                                  );
+                                                  setState(() => _isLoading = true);
+                                                  fetchGuru();
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    }),
+                                  ),
                           ],
                         ),
-                      )
-                    : Column(
-                        children: List.generate(display.length, (i) {
-                          final guru = display[i];
-                          final delay = i * 0.07;
-                          final sudah = guru['sudah_dinilai'] == true || guru['sudah_dinilai'] == 1;
-
-                          return AnimatedBuilder(
-                            animation: _animController,
-                            builder: (_, __) {
-                              final t = (_animController.value - delay).clamp(0.0, 1.0);
-                              return Opacity(
-                                opacity: t,
-                                child: Transform.translate(
-                                  offset: Offset(0, 16 * (1 - t)),
-                                  child: _GuruRow(
-                                    no: i + 1,
-                                    nama: guru['nama_guru'] ?? 'Guru',
-                                    jabatan: guru['jabatan'] ?? '',
-                                    nip: guru['nip'] ?? '-',
-                                    mapel: guru['mata_pelajaran'] ?? '-',
-                                    sudahDinilai: sudah,
-                                    isLast: i == display.length - 1,
-                                    onTap: () async {
-                                      await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => FormKuesionerPage(
-                                            idSiswa: widget.idUser,
-                                            idGuru: guru['id_guru'],
-                                            namaGuru: guru['nama_guru'],
-                                            nipGuru: guru['nip'] ?? '-', // FIX: Meneruskan NIP ke form sebelah
-                                          ),
-                                        ),
-                                      );
-                                      setState(() => _isLoading = true);
-                                      fetchGuru();
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        }),
                       ),
-              ],
-            ),
-          ),
+                    );
+                  }
+                ),
+              ),
 
-          const SizedBox(height: 20),
-          Text('Menampilkan ${display.length} dari $_totalGuru guru', style: const TextStyle(color: kSubtext, fontSize: 12)),
-          const SizedBox(height: 28),
-          Center(child: Text('©️ $tahunStr SPK Guru · SDN Mranggen', style: const TextStyle(color: kSubtext, fontSize: 11))),
-          const SizedBox(height: 12),
-        ],
+              const SizedBox(height: 20),
+              Text('Menampilkan ${display.length} dari $_totalGuru guru', style: const TextStyle(color: kSubtext, fontSize: 12)),
+              const SizedBox(height: 28),
+              Center(child: Text('©️ $tahunStr SPK Guru · SDN Mranggen', style: const TextStyle(color: kSubtext, fontSize: 11))),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -306,43 +298,43 @@ class _StatCard extends StatelessWidget {
   final String sub;
   final Color subColor;
   final double valueFontSize;
+  final double width; 
 
-  const _StatCard({required this.icon, required this.label, required this.value, required this.sub, this.subColor = const Color(0xFF9AABCC), this.valueFontSize = 20});
+  const _StatCard({required this.icon, required this.label, required this.value, required this.sub, this.subColor = const Color(0xFF9AABCC), this.valueFontSize = 20, required this.width});
   static const Color kPrimary = Color(0xFF1A5FA8);
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 14, offset: const Offset(0, 3))],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42, height: 42,
-              decoration: BoxDecoration(color: kPrimary.withOpacity(0.10), borderRadius: BorderRadius.circular(11)),
-              child: Icon(icon, color: kPrimary, size: 21),
+    return Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: kPrimary.withOpacity(0.07), blurRadius: 14, offset: const Offset(0, 3))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42, height: 42,
+            decoration: BoxDecoration(color: kPrimary.withOpacity(0.10), borderRadius: BorderRadius.circular(11)),
+            child: Icon(icon, color: kPrimary, size: 21),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7A99))),
+                const SizedBox(height: 3),
+                Text(value, style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: const Color(0xFF1A2340)), overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(sub, style: TextStyle(fontSize: 11, color: subColor), overflow: TextOverflow.ellipsis),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7A99))),
-                  const SizedBox(height: 3),
-                  Text(value, style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: const Color(0xFF1A2340)), overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text(sub, style: TextStyle(fontSize: 11, color: subColor), overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

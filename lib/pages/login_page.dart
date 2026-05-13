@@ -87,351 +87,89 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -60,
-                    right: -60,
-                    child: _decorCircle(220, Colors.white.withOpacity(0.06)),
-                  ),
-                  Positioned(
-                    bottom: 80,
-                    left: -80,
-                    child: _decorCircle(280, Colors.white.withOpacity(0.05)),
-                  ),
-                  Positioned(
-                    top: 200,
-                    right: 40,
-                    child: _decorCircle(100, Colors.white.withOpacity(0.07)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 48,
-                      vertical: 52,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 46,
-                              height: 46,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.school_rounded,
-                                color: _blue,
-                                size: 26,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  "SPK Kinerja Guru",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  "Sistem Pendukung Keputusan",
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 60),
-
-                        const Text(
-                          "Sistem Penilaian\nKinerja Guru",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Mendukung penilaian kinerja guru secara\nobjektif, transparan, dan berkelanjutan.",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
-                            fontSize: 14,
-                            height: 1.6,
-                          ),
-                        ),
-
-                        const SizedBox(height: 48),
-
-                        _featureItem(
-                          Icons.verified_user_rounded,
-                          "Penilaian Objektif",
-                          "Proses penilaian berdasarkan kriteria yang terukur dan transparan.",
-                        ),
-                        const SizedBox(height: 24),
-                        _featureItem(
-                          Icons.bar_chart_rounded,
-                          "Data Terintegrasi",
-                          "Semua data penilaian tersimpan aman dan terintegrasi dalam sistem.",
-                        ),
-                        const SizedBox(height: 24),
-                        _featureItem(
-                          Icons.groups_rounded,
-                          "Mendukung Pengembangan",
-                          "Hasil penilaian digunakan untuk pengembangan kompetensi guru.",
-                        ),
-
-                        const Spacer(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          Expanded(
-            flex: 4,
-            child: Container(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Deteksi ukuran layar (kurang dari 800 = layar HP/Tablet Portrait)
+          if (constraints.maxWidth < 800) {
+            return Container(
               color: const Color(0xFFF1F5F9),
               child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 48,
-                  ),
+                child: _buildLoginForm(), // Di HP, hanya tampilkan form login
+              ),
+            );
+          } else {
+            return Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _buildBanner(), // Banner kiri di Desktop
+                ),
+                Expanded(
+                  flex: 4,
                   child: Container(
-                    padding: const EdgeInsets.all(40),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade200,
-                          blurRadius: 30,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Icon(
-                              Icons.school_rounded,
-                              color: _blue,
-                              size: 38,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Center(
-                          child: Text(
-                            "SPK KINERJA GURU",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: _textMain,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Center(
-                          child: Text(
-                            "Silakan masuk menggunakan email Gmail",
-                            style: TextStyle(color: _textSub, fontSize: 13.5),
-                          ),
-                        ),
-
-                        const SizedBox(height: 36),
-
-                        const Text(
-                          "Email Gmail",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13.5,
-                            color: _textMain,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _inputField(
-                          controller: _userController,
-                          hint: "contoh@gmail.com",
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        const Text(
-                          "Password",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13.5,
-                            color: _textMain,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _inputField(
-                          controller: _passController,
-                          hint: "Masukkan password",
-                          icon: Icons.lock_outline_rounded,
-                          isPassword: true,
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ForgotPasswordPage(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Lupa Password?",
-                              style: TextStyle(
-                                color: _blue,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: _isLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                    color: _blue,
-                                  ),
-                                )
-                              : ElevatedButton(
-                                  onPressed: _handleLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _blue,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    "LOGIN",
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1.5,
-                                    ),
-                                  ),
-                                ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(color: Colors.grey.shade200),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                "atau",
-                                style: TextStyle(
-                                  color: Colors.grey.shade400,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(color: Colors.grey.shade200),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const RegisterPage(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.person_add_outlined,
-                              size: 18,
-                              color: _blue,
-                            ),
-                            label: const Text(
-                              "Belum punya akun? Daftar di sini",
-                              style: TextStyle(
-                                color: _blue,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13.5,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: _border,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    color: const Color(0xFFF1F5F9),
+                    child: Center(
+                      child: _buildLoginForm(), // Form kanan di Desktop
                     ),
                   ),
                 ),
-              ),
+              ],
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  // ─── WIDGET BANNER KIRI (Hanya muncul di Desktop) ──────────────────────
+  Widget _buildBanner() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(top: -60, right: -60, child: _decorCircle(220, Colors.white.withOpacity(0.06))),
+          Positioned(bottom: 80, left: -80, child: _decorCircle(280, Colors.white.withOpacity(0.05))),
+          Positioned(top: 200, right: 40, child: _decorCircle(100, Colors.white.withOpacity(0.07))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 52),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 46, height: 46,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.school_rounded, color: _blue, size: 26),
+                    ),
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text("SPK Kinerja Guru", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                        Text("Sistem Pendukung Keputusan", style: TextStyle(color: Colors.white60, fontSize: 11)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 60),
+                const Text("Sistem Penilaian\nKinerja Guru", style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w800, height: 1.2)),
+                const SizedBox(height: 16),
+                Text("Mendukung penilaian kinerja guru secara\nobjektif, transparan, dan berkelanjutan.", style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 14, height: 1.6)),
+                const SizedBox(height: 48),
+                _featureItem(Icons.verified_user_rounded, "Penilaian Objektif", "Proses penilaian berdasarkan kriteria yang terukur dan transparan."),
+                const SizedBox(height: 24),
+                _featureItem(Icons.bar_chart_rounded, "Data Terintegrasi", "Semua data penilaian tersimpan aman dan terintegrasi dalam sistem."),
+                const SizedBox(height: 24),
+                _featureItem(Icons.groups_rounded, "Mendukung Pengembangan", "Hasil penilaian digunakan untuk pengembangan kompetensi guru."),
+                const Spacer(),
+              ],
             ),
           ),
         ],
@@ -439,6 +177,128 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // ─── WIDGET FORM LOGIN (Tengah di HP, Kanan di Desktop) ────────────────
+  Widget _buildLoginForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 450), // Batas maksimal lebar form
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: Colors.grey.shade200, blurRadius: 30, offset: const Offset(0, 8)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 72, height: 72,
+                decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(20)),
+                child: const Icon(Icons.school_rounded, color: _blue, size: 38),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Center(
+              child: Text("SPK KINERJA GURU", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textMain, letterSpacing: 0.5)),
+            ),
+            const SizedBox(height: 6),
+            const Center(
+              child: Text("Silakan masuk menggunakan email Gmail", style: TextStyle(color: _textSub, fontSize: 13.5)),
+            ),
+
+            const SizedBox(height: 36),
+
+            const Text("Email Gmail", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain)),
+            const SizedBox(height: 8),
+            _inputField(
+              controller: _userController,
+              hint: "contoh@gmail.com",
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("Password", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain)),
+            const SizedBox(height: 8),
+            _inputField(
+              controller: _passController,
+              hint: "Masukkan password",
+              icon: Icons.lock_outline_rounded,
+              isPassword: true,
+            ),
+
+            const SizedBox(height: 28),
+
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage()));
+                },
+                child: const Text("Lupa Password?", style: TextStyle(color: _blue, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: _blue))
+                  : ElevatedButton(
+                      onPressed: _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _blue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text("LOGIN", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
+                    ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey.shade200)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text("atau", style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                ),
+                Expanded(child: Divider(color: Colors.grey.shade200)),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage()));
+                },
+                icon: const Icon(Icons.person_add_outlined, size: 18, color: _blue),
+                label: const Text("Belum punya akun? Daftar di sini", style: TextStyle(color: _blue, fontWeight: FontWeight.w600, fontSize: 13.5)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: _border, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── KOMPONEN BANTUAN ────────────────────────────────────────────────────
   Widget _inputField({
     required TextEditingController controller,
     required String hint,
@@ -458,9 +318,7 @@ class _LoginPageState extends State<LoginPage> {
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
-                  _obscurePass
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
+                  _obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                   color: _textSub,
                   size: 20,
                 ),
@@ -469,18 +327,9 @@ class _LoginPageState extends State<LoginPage> {
             : null,
         filled: true,
         fillColor: _inputBg,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _blue, width: 1.8),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _blue, width: 1.8)),
       ),
     );
   }
@@ -490,12 +339,8 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          width: 44, height: 44,
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: Colors.white, size: 22),
         ),
         const SizedBox(width: 16),
@@ -503,23 +348,9 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
               const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12.5,
-                  height: 1.5,
-                ),
-              ),
+              Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12.5, height: 1.5)),
             ],
           ),
         ),
@@ -528,10 +359,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _decorCircle(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
+    return Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
   }
 }

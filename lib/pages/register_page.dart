@@ -33,7 +33,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return RegExp(r"^[a-zA-Z0-9.]+@gmail\.com$").hasMatch(email);
   }
 
-  // ── Logic Bersih dengan ApiService ─────────────────────────────
+  // ── Logic Bersih dengan ApiService (TIDAK ADA YANG DIUBAH) ──
   Future<void> _handleRegister() async {
     if (_userController.text.isEmpty ||
         _waController.text.isEmpty ||
@@ -106,345 +106,88 @@ class _RegisterPageState extends State<RegisterPage> {
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      // ── MENGGUNAKAN LAYOUT BUILDER AGAR RESPONSIF ──
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Jika layar sempit (HP), sembunyikan banner kiri
+          if (constraints.maxWidth < 800) {
+            return Center(child: _buildRegisterForm());
+          } else {
+            // Jika layar lebar (Laptop), tampilkan Banner dan Form berdampingan
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 5, child: _buildBanner()),
+                Expanded(flex: 6, child: Center(child: _buildRegisterForm())),
+              ],
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  // ── WIDGET BANNER KIRI (Khusus Layar Besar) ──
+  Widget _buildBanner() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
         children: [
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -50, right: -50,
-                    child: _decorCircle(200, Colors.white.withOpacity(0.06)),
-                  ),
-                  Positioned(
-                    top: 130, right: 30,
-                    child: _decorCircle(90, Colors.white.withOpacity(0.05)),
-                  ),
-                  Positioned(
-                    bottom: 60, left: -70,
-                    child: _decorCircle(230, Colors.white.withOpacity(0.05)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 48),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 46, height: 46,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(Icons.school_rounded,
-                                  color: _blue, size: 26),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text("SPK Kinerja Guru",
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700)),
-                                Text("Sistem Pendukung Keputusan",
-                                    style: TextStyle(
-                                        color: Colors.white60, fontSize: 10)),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 52),
-
-                        const Text(
-                          "Buat Akun Baru",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          "Daftarkan akun Anda untuk mulai menggunakan\n"
-                          "sistem penilaian kinerja guru secara mudah\n"
-                          "dan terintegrasi.",
-                          style: TextStyle(
-                              color: Colors.white.withOpacity(0.75),
-                              fontSize: 13.5,
-                              height: 1.65),
-                        ),
-
-                        const SizedBox(height: 44),
-
-                        _featureItem(Icons.verified_user_rounded, "Akses Aman",
-                            "Data Anda dilindungi dengan sistem keamanan berlapis."),
-                        const SizedBox(height: 22),
-                        _featureItem(Icons.person_rounded, "Mudah Digunakan",
-                            "Interface sederhana untuk pengalaman pengguna yang lebih baik."),
-                        const SizedBox(height: 22),
-                        _featureItem(Icons.bar_chart_rounded, "Terintegrasi",
-                            "Semua proses penilaian terhubung dalam satu sistem."),
-
-                        const Spacer(),
-
-                        Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Sudah punya akun? ",
-                                  style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13)),
-                              GestureDetector(
-                                onTap: () => Navigator.pop(context),
-                                child: const Text(
-                                  "Masuk di sini",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          Expanded(
-            flex: 6,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 40, vertical: 40),
-              child: Container(
-                padding: const EdgeInsets.all(36),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade200,
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Positioned(top: -50, right: -50, child: _decorCircle(200, Colors.white.withOpacity(0.06))),
+          Positioned(top: 130, right: 30, child: _decorCircle(90, Colors.white.withOpacity(0.05))),
+          Positioned(bottom: 60, left: -70, child: _decorCircle(230, Colors.white.withOpacity(0.05))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 52, height: 52,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(Icons.person_add_rounded,
-                              color: _blue, size: 26),
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text("Form Pendaftaran",
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: _textMain)),
-                            SizedBox(height: 3),
-                            Text(
-                              "Lengkapi data berikut untuk membuat akun baru",
-                              style:
-                                  TextStyle(color: _textSub, fontSize: 12.5),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 28),
-                    Divider(color: Colors.grey.shade100, thickness: 1.5),
-                    const SizedBox(height: 24),
-
-                    _fieldLabel("Nama Lengkap"),
-                    const SizedBox(height: 8),
-                    _inputField(
-                      controller: _namaController,
-                      hint: "Masukkan nama lengkap Anda",
-                      icon: Icons.person_outline_rounded,
-                    ),
-
-                    const SizedBox(height: 18),
-                    _fieldLabel("Email Gmail"),
-                    const SizedBox(height: 8),
-                    _inputField(
-                      controller: _userController,
-                      hint: "contoh@gmail.com",
-                      icon: Icons.alternate_email_rounded,
-                      type: TextInputType.emailAddress,
-                    ),
-
-                    const SizedBox(height: 18),
-                    _fieldLabel("Nomor WhatsApp Aktif"),
-                    const SizedBox(height: 8),
-                    _inputField(
-                      controller: _waController,
-                      hint: "Contoh: 081234567890",
-                      icon: Icons.phone_android_rounded,
-                      type: TextInputType.phone,
-                    ),
-
-                    const SizedBox(height: 18),
-                    _fieldLabel("Password"),
-                    const SizedBox(height: 8),
-                    _inputField(
-                      controller: _passController,
-                      hint: "Masukkan password",
-                      icon: Icons.lock_outline_rounded,
-                      isPassword: true,
-                    ),
-
-                    const SizedBox(height: 18),
-                    _fieldLabel("Daftar Sebagai"),
-                    const SizedBox(height: 8),
-                    _dropdownRole(),
-
-                    const SizedBox(height: 18),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _fieldLabel(
-                                  _selectedRole == 'Guru' ? "NIP" : "NISN"),
-                              const SizedBox(height: 8),
-                              _inputField(
-                                controller: _indukController,
-                                hint: _selectedRole == 'Guru'
-                                    ? "Masukkan NIP"
-                                    : "Masukkan NISN",
-                                icon: Icons.badge_outlined,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _fieldLabel("Kelas (Contoh: 10A)"),
-                              const SizedBox(height: 8),
-                              _inputField(
-                                controller: _kelasController,
-                                hint: "Contoh: 10A",
-                                icon: Icons.class_outlined,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 22),
-
                     Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: _infoBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.info_rounded,
-                              color: _blue, size: 18),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text("Informasi",
-                                    style: TextStyle(
-                                        color: _blue,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13)),
-                                SizedBox(height: 4),
-                                Text(
-                                  "Pastikan data yang Anda masukkan sudah benar.\n"
-                                  "Data tidak dapat diubah setelah akun dibuat.",
-                                  style: TextStyle(
-                                      color: Color(0xFF1D4ED8),
-                                      fontSize: 12,
-                                      height: 1.5),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      width: 46, height: 46,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.school_rounded, color: _blue, size: 26),
                     ),
-
-                    const SizedBox(height: 28),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: _isLoading
-                          ? const Center(
-                              child:
-                                  CircularProgressIndicator(color: _blue))
-                          : ElevatedButton.icon(
-                              onPressed: _handleRegister,
-                              icon: const Icon(Icons.person_add_rounded,
-                                  size: 18),
-                              label: const Text(
-                                "DAFTAR SEKARANG",
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.2),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _blue,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text("SPK Kinerja Guru", style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text("Sistem Pendukung Keputusan", style: TextStyle(color: Colors.white60, fontSize: 10)),
+                      ],
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 52),
+                const Text("Buat Akun Baru", style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800, height: 1.2)),
+                const SizedBox(height: 14),
+                Text("Daftarkan akun Anda untuk mulai menggunakan\nsistem penilaian kinerja guru secara mudah\ndan terintegrasi.", style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13.5, height: 1.65)),
+                const SizedBox(height: 44),
+                _featureItem(Icons.verified_user_rounded, "Akses Aman", "Data Anda dilindungi dengan sistem keamanan berlapis."),
+                const SizedBox(height: 22),
+                _featureItem(Icons.person_rounded, "Mudah Digunakan", "Interface sederhana untuk pengalaman pengguna yang lebih baik."),
+                const SizedBox(height: 22),
+                _featureItem(Icons.bar_chart_rounded, "Terintegrasi", "Semua proses penilaian terhubung dalam satu sistem."),
+                const Spacer(),
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Sudah punya akun? ", style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Text("Masuk di sini", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13, decoration: TextDecoration.underline, decorationColor: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -452,9 +195,153 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _fieldLabel(String label) => Text(label,
-      style: const TextStyle(
-          fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain));
+  // ── WIDGET FORM PENDAFTARAN ──
+  Widget _buildRegisterForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 600), // Batas lebar di Laptop agar tidak melar
+        padding: const EdgeInsets.all(36),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 20, offset: const Offset(0, 6))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(14)),
+                  child: const Icon(Icons.person_add_rounded, color: _blue, size: 26),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text("Form Pendaftaran", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _textMain)),
+                      SizedBox(height: 3),
+                      Text("Lengkapi data berikut untuk membuat akun baru", style: TextStyle(color: _textSub, fontSize: 12.5)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 28),
+            Divider(color: Colors.grey.shade100, thickness: 1.5),
+            const SizedBox(height: 24),
+
+            _fieldLabel("Nama Lengkap"),
+            const SizedBox(height: 8),
+            _inputField(controller: _namaController, hint: "Masukkan nama lengkap Anda", icon: Icons.person_outline_rounded),
+
+            const SizedBox(height: 18),
+            _fieldLabel("Email Gmail"),
+            const SizedBox(height: 8),
+            _inputField(controller: _userController, hint: "contoh@gmail.com", icon: Icons.alternate_email_rounded, type: TextInputType.emailAddress),
+
+            const SizedBox(height: 18),
+            _fieldLabel("Nomor WhatsApp Aktif"),
+            const SizedBox(height: 8),
+            _inputField(controller: _waController, hint: "Contoh: 081234567890", icon: Icons.phone_android_rounded, type: TextInputType.phone),
+
+            const SizedBox(height: 18),
+            _fieldLabel("Password"),
+            const SizedBox(height: 8),
+            _inputField(controller: _passController, hint: "Masukkan password", icon: Icons.lock_outline_rounded, isPassword: true),
+
+            const SizedBox(height: 18),
+            _fieldLabel("Daftar Sebagai"),
+            const SizedBox(height: 8),
+            _dropdownRole(),
+
+            const SizedBox(height: 18),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _fieldLabel(_selectedRole == 'Guru' ? "NIP" : "NISN"),
+                      const SizedBox(height: 8),
+                      _inputField(controller: _indukController, hint: _selectedRole == 'Guru' ? "Masukkan NIP" : "Masukkan NISN", icon: Icons.badge_outlined),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _fieldLabel("Kelas (Contoh: 10A)"),
+                      const SizedBox(height: 8),
+                      _inputField(controller: _kelasController, hint: "Contoh: 10A", icon: Icons.class_outlined),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 22),
+
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _infoBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_rounded, color: _blue, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text("Informasi", style: TextStyle(color: _blue, fontWeight: FontWeight.w700, fontSize: 13)),
+                        SizedBox(height: 4),
+                        Text("Pastikan data yang Anda masukkan sudah benar.\nData tidak dapat diubah setelah akun dibuat.", style: TextStyle(color: Color(0xFF1D4ED8), fontSize: 12, height: 1.5)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: _blue))
+                  : ElevatedButton.icon(
+                      onPressed: _handleRegister,
+                      icon: const Icon(Icons.person_add_rounded, size: 18),
+                      label: const Text("DAFTAR SEKARANG", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _blue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── KOMPONEN BANTUAN UI ──
+  Widget _fieldLabel(String label) => Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: _textMain));
 
   Widget _inputField({
     required TextEditingController controller,
@@ -470,33 +357,19 @@ class _RegisterPageState extends State<RegisterPage> {
       style: const TextStyle(fontSize: 14, color: _textMain),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: Color(0xFFB0BEC5), fontSize: 14),
+        hintStyle: const TextStyle(color: Color(0xFFB0BEC5), fontSize: 14),
         prefixIcon: Icon(icon, color: _textSub, size: 20),
         suffixIcon: isPassword
             ? IconButton(
-                icon: Icon(
-                  _obscurePass
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: _textSub, size: 20,
-                ),
-                onPressed: () =>
-                    setState(() => _obscurePass = !_obscurePass),
+                icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: _textSub, size: 20),
+                onPressed: () => setState(() => _obscurePass = !_obscurePass),
               )
             : null,
         filled: true,
         fillColor: _inputBg,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _blue, width: 1.8),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _blue, width: 1.8)),
       ),
     );
   }
@@ -513,29 +386,20 @@ class _RegisterPageState extends State<RegisterPage> {
         child: DropdownButton<String>(
           value: _selectedRole,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: _textSub),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _textSub),
           items: ['Siswa', 'Guru'].map((r) {
             return DropdownMenuItem(
               value: r,
               child: Row(
                 children: [
-                  Icon(
-                    r == 'Guru'
-                        ? Icons.school_rounded
-                        : Icons.person_rounded,
-                    color: _blue, size: 18,
-                  ),
+                  Icon(r == 'Guru' ? Icons.school_rounded : Icons.person_rounded, color: _blue, size: 18),
                   const SizedBox(width: 10),
-                  Text(r,
-                      style: const TextStyle(
-                          fontSize: 14, color: _textMain)),
+                  Text(r, style: const TextStyle(fontSize: 14, color: _textMain)),
                 ],
               ),
             );
           }).toList(),
-          onChanged: (val) =>
-              setState(() => _selectedRole = val.toString()),
+          onChanged: (val) => setState(() => _selectedRole = val.toString()),
         ),
       ),
     );
@@ -547,10 +411,7 @@ class _RegisterPageState extends State<RegisterPage> {
       children: [
         Container(
           width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: Colors.white, size: 22),
         ),
         const SizedBox(width: 14),
@@ -558,17 +419,9 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14)),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12.5,
-                      height: 1.5)),
+              Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12.5, height: 1.5)),
             ],
           ),
         ),
@@ -576,8 +429,5 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _decorCircle(double size, Color color) => Container(
-        width: size, height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
+  Widget _decorCircle(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
 }

@@ -110,6 +110,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ── Responsive: gunakan lebar layar, maksimal 450 di tablet/desktop ──
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile    = screenWidth < 480;
+    final cardWidth   = isMobile ? double.infinity : 450.0;
+    final cardPadding = isMobile
+        ? const EdgeInsets.symmetric(horizontal: 20, vertical: 32)
+        : const EdgeInsets.all(40);
+    final cardMargin  = isMobile
+        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
+        : const EdgeInsets.symmetric(vertical: 20);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
@@ -125,9 +136,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            width: 450,
-            padding: const EdgeInsets.all(40),
-            margin: const EdgeInsets.symmetric(vertical: 20),
+            width: cardWidth,
+            padding: cardPadding,
+            margin: cardMargin,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
@@ -262,7 +273,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
-  // ── Helpers ──
+  // ── Helpers (tidak berubah) ──
   Widget _inputField({
     required TextEditingController controller,
     required String hint,

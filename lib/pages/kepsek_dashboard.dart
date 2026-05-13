@@ -40,30 +40,55 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      body: Row(
-        children: [
-          SidebarWidget(user: widget.user),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTopBar(),
-                    const SizedBox(height: 28),
-                    _buildStatCards(),
-                    const SizedBox(height: 28),
-                    _buildMenuNavigasi(),
-                  ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Deteksi apakah layar cukup lebar untuk mode Desktop
+        bool isDesktop = constraints.maxWidth >= 800;
+
+        return Scaffold(
+          backgroundColor: _bg,
+          // AppBar khusus Mobile untuk memunculkan tombol Hamburger (Sidebar)
+          appBar: isDesktop
+              ? null
+              : AppBar(
+                  backgroundColor: _cardBg,
+                  foregroundColor: _textPrimary,
+                  elevation: 0,
+                  title: const Text("Dashboard Kepala Sekolah", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+          // Drawer berfungsi sebagai Sidebar tersembunyi di Mobile
+          drawer: isDesktop ? null : Drawer(child: SidebarWidget(user: widget.user)),
+          body: Row(
+            children: [
+              // Sidebar menempel permanen hanya di Desktop
+              if (isDesktop) SidebarWidget(user: widget.user),
+              Expanded(
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(), // Scroll halus ala mobile
+                    child: Center(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 1200), // Batas lebar konten di Web
+                        padding: const EdgeInsets.all(28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (isDesktop) _buildTopBar(),
+                            if (isDesktop) const SizedBox(height: 28),
+                            _buildStatCards(constraints.maxWidth), // Kirim ukuran layar ke fungsi
+                            const SizedBox(height: 28),
+                            _buildMenuNavigasi(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -129,8 +154,13 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
     );
   }
 
-  Widget _buildStatCards() {
-    return Row(
+  Widget _buildStatCards(double screenWidth) {
+    // Menyesuaikan lebar kartu statistik: Penuh (Mobile) atau Tetap (Desktop)
+    double cardWidth = screenWidth < 600 ? double.infinity : 280;
+
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
       children: [
         _statCard(
           Icons.admin_panel_settings_rounded,
@@ -138,6 +168,7 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
           const Color(0xFFEFF6FF),
           "Peran Akun",
           widget.user['role'],
+          cardWidth,
         ),
         _statCard(
           Icons.groups_rounded,
@@ -145,6 +176,7 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
           const Color(0xFFFFFBEB),
           "Total Guru",
           "$_totalGuru Terdaftar",
+          cardWidth,
         ),
         _statCard(
           Icons.school_rounded,
@@ -152,6 +184,7 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
           const Color(0xFFF0FDF4),
           "Total Siswa",
           "$_totalSiswa Terdaftar",
+          cardWidth,
         ),
       ],
     );
@@ -163,28 +196,30 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
     Color bg,
     String label,
     String value,
+    double width,
   ) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: _cardBg,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: color),
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(14),
             ),
-            const SizedBox(width: 16),
-            Column(
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 16),
+          // Expanded mencegah teks Overflow di layar HP kecil
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -198,11 +233,12 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
                     fontWeight: FontWeight.w800,
                     color: _textPrimary,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -283,6 +319,7 @@ class _KepsekDashboardState extends State<KepsekDashboard> {
             const SizedBox(height: 12),
             Text(
               title,
+              textAlign: TextAlign.center, // Teks otomatis ke tengah jika ada dua baris
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
           ],
